@@ -9,6 +9,8 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#111111">
 <title>Critical Base · XP Sheet</title>
 <style>
+  [x-cloak] { display: none !important; }
+
   :root {
     --bg:        #ffffff;
     --bg2:       #f4f4f5;
@@ -87,7 +89,6 @@
   .xp-total-card { background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 20px; text-align: center; margin-bottom: 12px; }
   .xp-total-label { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
   .xp-total-number { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
-  .xp-total-sub { font-size: 0.85rem; color: var(--text2); margin-top: 6px; }
 
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
   .stat-card { background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid; border-radius: var(--radius); padding: 12px; }
@@ -110,8 +111,7 @@
   .action-btn .btn-label { font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); text-align: left; }
 
   /* ── MODAL ── */
-  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-backdrop.open { display: flex; }
+  .modal-backdrop { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal { width: 100%; max-width: 480px; background: var(--bg); border-top: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 20px 16px 36px; max-height: 88vh; overflow-y: auto; animation: slideUp 0.22s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -131,7 +131,6 @@
   .submit-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.9rem; font-weight: 700; color: #fff; transition: opacity 0.15s; }
   .submit-btn:active { opacity: 0.85; }
   .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .submit-btn.levelup-btn { background: var(--warn); }
 
   /* ── JOURNAL ── */
   .journal-view { padding: 16px; }
@@ -161,7 +160,6 @@
   .setup-card  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
   .danger-btn  { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--danger); border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--danger); transition: background 0.15s; margin-top: 10px; }
   .danger-btn:hover { background: var(--danger-bg); }
-  .info-note   { font-size: 0.82rem; color: var(--text2); line-height: 1.5; margin-top: 8px; }
   .notes-textarea { width: 100%; min-height: 120px; padding: 10px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; font-size: 0.9rem; resize: vertical; transition: border-color 0.15s; }
   .notes-textarea:focus { outline: none; border-color: var(--accent); }
 
@@ -174,158 +172,311 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
-<body>
-<div id="app">
+<body x-data="app()" x-init="init()">
+
+<div id="app" x-cloak>
   <header>
     <div class="header-top">
-      <h1>⚔ Critical Base · XP Sheet</h1>
-      <button class="lang-btn" id="langBtn" onclick="toggleLang()"></button>
+      <h1>&#9876; Critical Base &middot; XP Sheet</h1>
+      <button class="lang-btn" @click="toggleLang()">
+        <span x-text="langFlag"></span>
+        <span x-text="lang.toUpperCase()"></span>
+      </button>
     </div>
     <div class="char-strip">
-      <span class="char-name" id="headerName">—</span>
-      <span class="char-level" id="headerLevel"></span>
+      <span class="char-name" x-text="char.name || '&mdash;'"></span>
+      <span class="char-level" x-text="char.name ? T('char_level') + ' ' + char.level : ''"></span>
     </div>
   </header>
 
   <nav>
-    <button onclick="showView('setup')" id="nav-setup">
-      <span class="nav-icon">⚙</span><span data-i18n="nav_setup">Character</span>
+    <button @click="view = 'setup'" :class="{ active: view === 'setup' }">
+      <span class="nav-icon">&#9881;</span><span x-text="T('nav_setup')"></span>
     </button>
-    <button onclick="showView('dashboard')" id="nav-dashboard">
-      <span class="nav-icon">🏠</span><span data-i18n="nav_dash">Overview</span>
+    <button @click="view = 'dashboard'" :class="{ active: view === 'dashboard' }">
+      <span class="nav-icon">&#127968;</span><span x-text="T('nav_dash')"></span>
     </button>
-    <button onclick="showView('log')" id="nav-log">
-      <span class="nav-icon">⚡</span><span data-i18n="nav_log">Log XP</span>
+    <button @click="view = 'log'" :class="{ active: view === 'log' }">
+      <span class="nav-icon">&#9889;</span><span x-text="T('nav_log')"></span>
     </button>
-    <button onclick="showView('journal')" id="nav-journal">
-      <span class="nav-icon">📜</span><span data-i18n="nav_journal">Journal</span>
+    <button @click="view = 'journal'" :class="{ active: view === 'journal' }">
+      <span class="nav-icon">&#128220;</span><span x-text="T('nav_journal')"></span>
     </button>
   </nav>
 
   <main>
-    <!-- CHARACTER SETUP (first/default tab) -->
-    <div class="view active" id="view-setup">
+    <!-- CHARACTER SETUP -->
+    <div class="view" :class="{ active: view === 'setup' }">
       <div class="setup-view">
         <div class="setup-card">
-          <div class="section-title" data-i18n="char_info">Character</div>
+          <div class="section-title" x-text="T('char_info')"></div>
           <div class="form-group">
-            <label class="form-label" data-i18n="char_name">Name</label>
-            <input class="form-input" id="inputName" type="text" placeholder="Aragorn...">
+            <label class="form-label" x-text="T('char_name')"></label>
+            <input class="form-input" x-model="char.name" type="text" placeholder="Aragorn...">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="char_level_label">Starting Level</label>
-            <input class="form-input" id="inputLevel" type="number" min="1" max="99" placeholder="1">
+            <label class="form-label" x-text="T('char_level_label')"></label>
+            <input class="form-input" x-model.number="char.level" type="number" min="1" max="99" placeholder="1">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="starting_xp">Starting XP</label>
-            <input class="form-input" id="inputStartXp" type="number" placeholder="0" min="0">
+            <label class="form-label" x-text="T('starting_xp')"></label>
+            <input class="form-input" x-model.number="char.startXp" type="number" placeholder="0" min="0">
           </div>
-          <button class="submit-btn" onclick="saveCharacter()" data-i18n="btn_save">Save Character</button>
-          <button class="danger-btn" onclick="confirmReset()" data-i18n="btn_reset">Reset All Data</button>
+          <button class="submit-btn" @click="saveCharacter()" x-text="T('btn_save')"></button>
+          <button class="danger-btn" @click="confirmReset()" x-text="T('btn_reset')"></button>
         </div>
         <div class="setup-card">
-          <div class="section-title" data-i18n="notes_title">Notes</div>
-          <textarea class="notes-textarea" id="notesArea" placeholder="..." oninput="saveNotes()"></textarea>
+          <div class="section-title" x-text="T('notes_title')"></div>
+          <textarea class="notes-textarea" x-model="char.notes" @input="saveState()" placeholder="..."></textarea>
         </div>
       </div>
     </div>
 
     <!-- DASHBOARD -->
-    <div class="view" id="view-dashboard">
+    <div class="view" :class="{ active: view === 'dashboard' }">
       <div class="dashboard">
         <div class="xp-total-card">
-          <div class="xp-total-label" data-i18n="total_xp">Total XP</div>
-          <div class="xp-total-number" id="totalXpDisplay">0</div>
-
+          <div class="xp-total-label" x-text="T('total_xp')"></div>
+          <div class="xp-total-number" x-text="totalXP.toLocaleString()"></div>
         </div>
         <div class="stats-grid">
           <div class="stat-card maneuver">
-            <div class="stat-card-label" data-i18n="cat_maneuver">Maneuvers</div>
-            <div class="stat-card-value" id="stat-maneuver">0</div>
+            <div class="stat-card-label" x-text="T('cat_maneuver')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('maneuver').toLocaleString()"></div>
           </div>
           <div class="stat-card save">
-            <div class="stat-card-label" data-i18n="cat_save">Saving Throws</div>
-            <div class="stat-card-value" id="stat-save">0</div>
+            <div class="stat-card-label" x-text="T('cat_save')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('save').toLocaleString()"></div>
           </div>
           <div class="stat-card crit-done">
-            <div class="stat-card-label" data-i18n="cat_crit_done">Crits Done</div>
-            <div class="stat-card-value" id="stat-crit-done">0</div>
+            <div class="stat-card-label" x-text="T('cat_crit_done')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('crit-done').toLocaleString()"></div>
           </div>
           <div class="stat-card crit-recv">
-            <div class="stat-card-label" data-i18n="cat_crit_recv">Crits Received</div>
-            <div class="stat-card-value" id="stat-crit-recv">0</div>
+            <div class="stat-card-label" x-text="T('cat_crit_recv')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('crit-recv').toLocaleString()"></div>
           </div>
           <div class="stat-card kill">
-            <div class="stat-card-label" data-i18n="cat_kill">Kills</div>
-            <div class="stat-card-value" id="stat-kill">0</div>
+            <div class="stat-card-label" x-text="T('cat_kill')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('kill').toLocaleString()"></div>
           </div>
           <div class="stat-card spell">
-            <div class="stat-card-label" data-i18n="cat_spell">Spells</div>
-            <div class="stat-card-value" id="stat-spell">0</div>
+            <div class="stat-card-label" x-text="T('cat_spell')"></div>
+            <div class="stat-card-value" x-text="xpByCategory('spell').toLocaleString()"></div>
           </div>
         </div>
-        <button class="submit-btn" onclick="showView('log')" data-i18n="btn_log_xp">⚡ Log XP</button>
+        <button class="submit-btn" @click="view = 'log'" x-text="T('btn_log_xp')"></button>
       </div>
     </div>
 
     <!-- LOG XP -->
-    <div class="view" id="view-log">
+    <div class="view" :class="{ active: view === 'log' }">
       <div class="log-view">
-        <div class="section-title" data-i18n="choose_action">Choose Action</div>
+        <div class="section-title" x-text="T('choose_action')"></div>
         <div class="action-grid">
-          <button class="action-btn" onclick="openModal('maneuver')">
-            <span class="btn-icon">🗡️</span><span class="btn-label" data-i18n="cat_maneuver">Maneuver</span>
+          <button class="action-btn" @click="openModal('maneuver')">
+            <span class="btn-icon">&#128481;&#65039;</span>
+            <span class="btn-label" x-text="T('cat_maneuver')"></span>
           </button>
-          <button class="action-btn" onclick="openModal('save')">
-            <span class="btn-icon">🛡️</span><span class="btn-label" data-i18n="cat_save">Saving Throw</span>
+          <button class="action-btn" @click="openModal('save')">
+            <span class="btn-icon">&#128737;&#65039;</span>
+            <span class="btn-label" x-text="T('cat_save')"></span>
           </button>
-          <button class="action-btn" onclick="openModal('crit-done')">
-            <span class="btn-icon">⚔️</span><span class="btn-label" data-i18n="cat_crit_done">Crit Done</span>
+          <button class="action-btn" @click="openModal('crit-done')">
+            <span class="btn-icon">&#9876;&#65039;</span>
+            <span class="btn-label" x-text="T('cat_crit_done')"></span>
           </button>
-          <button class="action-btn" onclick="openModal('crit-recv')">
-            <span class="btn-icon">🩸</span><span class="btn-label" data-i18n="cat_crit_recv">Crit Received</span>
+          <button class="action-btn" @click="openModal('crit-recv')">
+            <span class="btn-icon">&#129656;</span>
+            <span class="btn-label" x-text="T('cat_crit_recv')"></span>
           </button>
-          <button class="action-btn" onclick="openModal('kill')">
-            <span class="btn-icon">💀</span><span class="btn-label" data-i18n="cat_kill">Kill</span>
+          <button class="action-btn" @click="openModal('kill')">
+            <span class="btn-icon">&#128128;</span>
+            <span class="btn-label" x-text="T('cat_kill')"></span>
           </button>
-          <button class="action-btn" onclick="openModal('spell')">
-            <span class="btn-icon">✨</span><span class="btn-label" data-i18n="cat_spell">Spell</span>
+          <button class="action-btn" @click="openModal('spell')">
+            <span class="btn-icon">&#10024;</span>
+            <span class="btn-label" x-text="T('cat_spell')"></span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- JOURNAL -->
-    <div class="view" id="view-journal">
+    <div class="view" :class="{ active: view === 'journal' }">
       <div class="journal-view">
         <div class="filter-row">
-          <button class="filter-chip active" data-filter="all"       onclick="setFilter('all')"       data-i18n="filter_all">All</button>
-          <button class="filter-chip" data-filter="maneuver"         onclick="setFilter('maneuver')"  data-i18n="cat_maneuver">Maneuver</button>
-          <button class="filter-chip" data-filter="save"             onclick="setFilter('save')"      data-i18n="cat_save">Save</button>
-          <button class="filter-chip" data-filter="crit-done"        onclick="setFilter('crit-done')" data-i18n="cat_crit_done">Crit Done</button>
-          <button class="filter-chip" data-filter="crit-recv"        onclick="setFilter('crit-recv')" data-i18n="cat_crit_recv">Crit Recv</button>
-          <button class="filter-chip" data-filter="kill"             onclick="setFilter('kill')"      data-i18n="cat_kill">Kill</button>
-          <button class="filter-chip" data-filter="spell"            onclick="setFilter('spell')"     data-i18n="cat_spell">Spell</button>
+          <button class="filter-chip" :class="{ active: filter === 'all' }"       @click="filter = 'all'"       x-text="T('filter_all')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'maneuver' }"  @click="filter = 'maneuver'"  x-text="T('cat_maneuver')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'save' }"      @click="filter = 'save'"      x-text="T('cat_save')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'crit-done' }" @click="filter = 'crit-done'" x-text="T('cat_crit_done')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'crit-recv' }" @click="filter = 'crit-recv'" x-text="T('cat_crit_recv')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'kill' }"      @click="filter = 'kill'"      x-text="T('cat_kill')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'spell' }"     @click="filter = 'spell'"     x-text="T('cat_spell')"></button>
         </div>
-        <div id="journalList"></div>
+        <div x-show="filteredLog.length === 0" class="journal-empty" x-text="T('no_entries')"></div>
+        <template x-for="entry in filteredLog" :key="entry.id">
+          <div class="journal-entry" :class="entry.cat">
+            <div class="entry-top">
+              <span class="entry-cat" x-text="catLabel(entry.cat)"></span>
+              <span class="entry-xp"  x-text="entryXpStr(entry)"></span>
+            </div>
+            <div class="entry-desc" x-text="renderDesc(entry.descData)"></div>
+            <div class="entry-note" x-show="entry.note" x-text="entry.note"></div>
+            <div class="entry-time" x-text="entryTime(entry)"></div>
+            <button class="entry-delete" @click="deleteEntry(entry.id)">&#10005;</button>
+          </div>
+        </template>
       </div>
     </div>
   </main>
 </div>
 
-<div class="modal-backdrop" id="modalBackdrop" onclick="closeModalOnBackdrop(event)">
-  <div class="modal" id="modalContent"></div>
+<!-- MODAL -->
+<div class="modal-backdrop" x-show="modal.open" x-cloak @click.self="closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" x-text="modalTitle"></span>
+      <button class="modal-close" @click="closeModal()">&#10005;</button>
+    </div>
+
+    <!-- Maneuver -->
+    <div x-show="modal.type === 'maneuver'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_difficulty')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.diff">
+            <template x-for="d in maneuverDiffs" :key="d.v">
+              <option :value="d.v" x-text="`${T(d.k)} \u2014 ${d.xp}`"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_risk')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.risk">
+            <template x-for="r in maneuverRisks" :key="r.v">
+              <option :value="r.v" x-text="`${T(r.k)} \u2014 \xd7${r.mult}`"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div x-show="modal.type === 'save'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_save_score')"></label>
+        <input class="form-input" x-model.number="modal.saveScore" type="number" min="1" max="999" placeholder="100">
+      </div>
+    </div>
+
+    <!-- Crit Done -->
+    <div x-show="modal.type === 'crit-done'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_crit_grade')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.grade">
+            <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+              <option :value="g" x-text="g"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_opp_level')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.oppLevel">
+            <template x-for="i in 21" :key="i">
+              <option :value="String(i - 1)" x-text="i - 1 === 10 ? '10+' : String(i - 1)"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crit Received -->
+    <div x-show="modal.type === 'crit-recv'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_crit_grade')"></label>
+        <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.gradeRecv">
+            <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+              <option :value="g" x-text="`${g} \u2014 ${CRIT_RECV_TABLE[g]} XP`"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kill -->
+    <div x-show="modal.type === 'kill'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_opp_level')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model="modal.killOpp">
+            <template x-for="l in killLevels" :key="String(l)">
+              <option :value="String(l)" x-text="String(l)"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">
+        <span x-text="T('your_level')"></span>: <strong x-text="char.level"></strong>
+      </p>
+    </div>
+
+    <!-- Spell -->
+    <div x-show="modal.type === 'spell'">
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_spell_level')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model.number="modal.spellLvl">
+            <template x-for="l in 11" :key="l">
+              <option :value="l" x-text="l === 11 ? '11+' : String(l)"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" x-text="T('lbl_caster_level')"></label>
+        <div class="select-wrap">
+          <select class="form-select" x-model.number="modal.casterLvl">
+            <template x-for="l in 15" :key="l">
+              <option :value="l" x-text="String(l)"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP Preview -->
+    <div class="xp-preview">
+      <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+      <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+    </div>
+
+    <!-- Note -->
+    <div class="form-group">
+      <label class="form-label" x-text="T('lbl_note')"></label>
+      <input class="form-input" x-model="modal.note" type="text" placeholder="...">
+    </div>
+
+    <button class="submit-btn" @click="confirmXP()" :disabled="confirmDisabled" x-text="T('btn_confirm')"></button>
+  </div>
 </div>
-<div class="toast" id="toastEl"></div>
+
+<div class="toast" :class="{ show: toastShow }" x-text="toastMsg"></div>
 
 <script>
 // ═══════════════════════════════════════════
 // XP TABLES
 // ═══════════════════════════════════════════
-const MANEUVER_XP = { 'Routine':0,'Easy':5,'Light':10,'Medium':50,'Hard':100,'Very Hard':150,'Extremely Hard':200,'Sheer Folly':300,'Absurd':500 };
+const MANEUVER_XP   = { 'Routine':0,'Easy':5,'Light':10,'Medium':50,'Hard':100,'Very Hard':150,'Extremely Hard':200,'Sheer Folly':300,'Absurd':500 };
 const MANEUVER_RISK = { 'None':0.5,'Some':1.0,'Peril':2.0,'Grave':3.0,'Extreme':4.0 };
 
-// Kill table: rows=opp level 0–9, cols=char level 1–10 (index 0–9)
 const KILL_TABLE = {
   0: [50,45,40,35,30,25,20,15,10,5],
   1: [200,130,130,110,100,90,80,70,60,50],
@@ -341,38 +492,34 @@ const KILL_TABLE = {
 function getKillXP(oppLevel, charLevel) {
   const ol = oppLevel === '10+' ? 10 : parseInt(oppLevel);
   const cl = charLevel;
-  if (cl >= 10 || ol >= 10) return Math.max(200, 200 + 50*(ol - cl));
+  if (cl >= 10 || ol >= 10) return Math.max(200, 200 + 50 * (ol - cl));
   return (KILL_TABLE[ol] || [])[cl - 1] ?? 0;
 }
 
-// Critical Done: opp level 0–10, grade A–F
-// A–E from rulebook; F extrapolated as E + one step
 const CRIT_DONE_BASE = [
-  {A:3,  B:5,   C:8,   D:10,  E:13,  F:16},   // 0
-  {A:5,  B:10,  C:15,  D:20,  E:25,  F:30},   // 1
-  {A:10, B:20,  C:30,  D:40,  E:50,  F:60},   // 2
-  {A:15, B:30,  C:45,  D:60,  E:75,  F:90},   // 3
-  {A:20, B:40,  C:60,  D:80,  E:100, F:120},  // 4
-  {A:25, B:50,  C:75,  D:100, E:125, F:150},  // 5
-  {A:30, B:60,  C:90,  D:120, E:150, F:180},  // 6
-  {A:35, B:70,  C:105, D:140, E:175, F:210},  // 7
-  {A:40, B:80,  C:120, D:160, E:200, F:240},  // 8
-  {A:45, B:90,  C:135, D:180, E:225, F:270},  // 9
-  {A:50, B:100, C:150, D:200, E:250, F:300},  // 10
+  {A:3,  B:5,   C:8,   D:10,  E:13,  F:16},
+  {A:5,  B:10,  C:15,  D:20,  E:25,  F:30},
+  {A:10, B:20,  C:30,  D:40,  E:50,  F:60},
+  {A:15, B:30,  C:45,  D:60,  E:75,  F:90},
+  {A:20, B:40,  C:60,  D:80,  E:100, F:120},
+  {A:25, B:50,  C:75,  D:100, E:125, F:150},
+  {A:30, B:60,  C:90,  D:120, E:150, F:180},
+  {A:35, B:70,  C:105, D:140, E:175, F:210},
+  {A:40, B:80,  C:120, D:160, E:200, F:240},
+  {A:45, B:90,  C:135, D:180, E:225, F:270},
+  {A:50, B:100, C:150, D:200, E:250, F:300},
 ];
 const CRIT_DONE_STEP = {A:5,B:10,C:15,D:20,E:25,F:30};
 function getCritDoneXP(oppLevel, grade) {
-  const ol = parseInt(oppLevel)||0;
-  const row = CRIT_DONE_BASE[Math.min(ol,10)];
+  const ol   = parseInt(oppLevel) || 0;
+  const row  = CRIT_DONE_BASE[Math.min(ol, 10)];
   const base = row[grade] ?? 0;
-  const extra = Math.max(0, ol-10) * (CRIT_DONE_STEP[grade]||0);
+  const extra = Math.max(0, ol - 10) * (CRIT_DONE_STEP[grade] || 0);
   return base + extra;
 }
 
-// Critical Received: foe always treated as level 20
 const CRIT_RECV_TABLE = {A:100,B:200,C:300,D:400,E:500,F:600};
 
-// Spell table
 const SPELL_TABLE = [
   [100,90,80,70,60,50,40,30,20,10],
   [110,100,90,80,70,60,50,40,30,20],
@@ -386,10 +533,13 @@ const SPELL_TABLE = [
   [190,180,170,160,150,140,130,120,110,100],
 ];
 function getSpellXP(spellLevel, casterLevel) {
-  const sl=parseInt(spellLevel), cl=parseInt(casterLevel);
-  if (sl>=11||cl>=11) return Math.min(200,Math.max(0,100-10*(cl-sl)));
-  return SPELL_TABLE[sl-1][Math.min(cl-1,9)]??0;
+  const sl = parseInt(spellLevel), cl = parseInt(casterLevel);
+  if (sl >= 11 || cl >= 11) return Math.min(200, Math.max(0, 100 - 10 * (cl - sl)));
+  return SPELL_TABLE[sl - 1][Math.min(cl - 1, 9)] ?? 0;
 }
+
+const DIFF_KEYS = {'Routine':'diff_routine','Easy':'diff_easy','Light':'diff_light','Medium':'diff_medium','Hard':'diff_hard','Very Hard':'diff_vhard','Extremely Hard':'diff_ehard','Sheer Folly':'diff_folly','Absurd':'diff_absurd'};
+const RISK_KEYS = {'None':'risk_none','Some':'risk_some','Peril':'risk_peril','Grave':'risk_grave','Extreme':'risk_extreme'};
 
 // ═══════════════════════════════════════════
 // I18N
@@ -403,7 +553,7 @@ const STRINGS = {
     choose_action:'Choose Action',
     char_info:'Character', char_name:'Name', char_level_label:'Starting Level',
     starting_xp:'Starting XP',
-    btn_save:'Save', btn_reset:'Reset All Data', btn_log_xp:'⚡ Log XP',
+    btn_save:'Save', btn_reset:'Reset All Data', btn_log_xp:'\u26a1 Log XP',
     notes_title:'Notes',
     filter_all:'All',
     modal_maneuver:'Log Maneuver', modal_save:'Log Saving Throw',
@@ -418,22 +568,14 @@ const STRINGS = {
     char_level:'Level',
     setup_saved:'Saved!',
     reset_confirm:'Delete ALL data? This cannot be undone.',
-    levelup_available:'Level Up Available!',
-    levelup_modal_title:'Confirm Level Up',
-    levelup_modal_desc:'Your XP qualifies you for a level advance. Confirm when the adventure is over.',
-    levelup_confirm:'Confirm Level Up',
-    levelup_done_msg:'Now level',
-    entry_levelup:'⭐ Level Up',
+    entry_levelup:'\u2b50 Level Up',
     no_entries:'No entries yet.',
-
-    xp_to_next:'XP to next level',
     your_level:'Your current level',
     foe_level_note:'Foe level always treated as 20',
     risk_none:'None', risk_some:'Some', risk_peril:'Peril', risk_grave:'Grave', risk_extreme:'Extreme',
     diff_routine:'Routine', diff_easy:'Easy', diff_light:'Light', diff_medium:'Medium',
     diff_hard:'Hard', diff_vhard:'Very Hard', diff_ehard:'Extremely Hard',
     diff_folly:'Sheer Folly', diff_absurd:'Absurd',
-    // structured desc keys
     desc_maneuver:'Maneuver', desc_save:'Score', desc_critd_grade:'Crit grade',
     desc_critd_opp:'vs opp', desc_critr_grade:'Crit recv grade',
     desc_kill:'Kill opp', desc_kill_you:'your level',
@@ -447,32 +589,25 @@ const STRINGS = {
     choose_action:'Scegli Azione',
     char_info:'Personaggio', char_name:'Nome', char_level_label:'Livello Iniziale',
     starting_xp:'XP Iniziali',
-    btn_save:'Salva', btn_reset:'Cancella Tutto', btn_log_xp:'⚡ Registra XP',
+    btn_save:'Salva', btn_reset:'Cancella Tutto', btn_log_xp:'\u26a1 Registra XP',
     notes_title:'Note',
     filter_all:'Tutti',
     modal_maneuver:'Registra Manovra', modal_save:'Registra Tiro Salvezza',
     modal_crit_done:'Registra Critico Fatto', modal_crit_recv:'Registra Critico Subito',
     modal_kill:'Registra Uccisione', modal_spell:'Registra Magia',
-    lbl_difficulty:'Difficoltà', lbl_risk:'Pericolo',
+    lbl_difficulty:'Difficolt\xe0', lbl_risk:'Pericolo',
     lbl_save_score:'Punteggio (= XP)',
-    lbl_crit_grade:'Grado del Critico', lbl_opp_level:"Livello Avversario",
+    lbl_crit_grade:'Grado del Critico', lbl_opp_level:'Livello Avversario',
     lbl_spell_level:'Livello Magia', lbl_caster_level:'Livello Incantatore',
     lbl_note:'Nota (opzionale)', lbl_xp_earned:'XP Guadagnati',
     btn_confirm:'Registra',
     char_level:'Livello',
     setup_saved:'Salvato!',
-    reset_confirm:'Cancellare TUTTI i dati? Non si può annullare.',
-    levelup_available:'Avanzamento Disponibile!',
-    levelup_modal_title:'Conferma Avanzamento',
-    levelup_modal_desc:'Le tue XP ti qualificano per un avanzamento. Conferma alla fine dell\'avventura.',
-    levelup_confirm:'Conferma Avanzamento',
-    levelup_done_msg:'Ora al livello',
-    entry_levelup:'⭐ Avanzamento',
+    reset_confirm:'Cancellare TUTTI i dati? Non si pu\xf2 annullare.',
+    entry_levelup:'\u2b50 Avanzamento',
     no_entries:'Nessuna voce ancora.',
-
-    xp_to_next:'XP al prossimo livello',
     your_level:'Il tuo livello attuale',
-    foe_level_note:'Il livello del nemico è sempre trattato come 20',
+    foe_level_note:'Il livello del nemico \xe8 sempre trattato come 20',
     risk_none:'Nessuno', risk_some:'Qualche', risk_peril:'Pericolo', risk_grave:'Grave', risk_extreme:'Estremo',
     diff_routine:'Routine', diff_easy:'Facile', diff_light:'Leggero', diff_medium:'Medio',
     diff_hard:'Difficile', diff_vhard:'Molto Difficile', diff_ehard:'Estrem. Difficile',
@@ -484,378 +619,237 @@ const STRINGS = {
   }
 };
 
-let lang = localStorage.getItem('cb_lang') || 'en';
-function T(k) { return (STRINGS[lang]||STRINGS.en)[k] || k; }
-
-function toggleLang() {
-  lang = lang === 'en' ? 'it' : 'en';
-  localStorage.setItem('cb_lang', lang);
-  updateLangBtn();
-  applyI18n();
-  updateHeader();
-  updateDashboard();
-  renderJournal();
-}
-
-function updateLangBtn() {
-  // Show current language code + flag, clicking switches to the other
-  const flags = { en: '🇬🇧', it: '🇮🇹' };
-  const labels = { en: 'EN', it: 'IT' };
-  document.getElementById('langBtn').innerHTML = `${flags[lang]} ${labels[lang]}`;
-}
-
-function applyI18n() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = T(el.getAttribute('data-i18n'));
-  });
-}
-
 // ═══════════════════════════════════════════
-// STATE
+// ALPINE COMPONENT
 // ═══════════════════════════════════════════
-function loadState() {
-  try { const s=localStorage.getItem('cb_state'); return s?JSON.parse(s):defaultState(); }
-  catch(e) { return defaultState(); }
+function app() {
+  return {
+    lang: localStorage.getItem('cb_lang') || 'en',
+    view: 'setup',
+    char: { name:'', level:1, startXp:0, notes:'', log:[] },
+    modal: {
+      open:false, type:null,
+      diff:'Medium', risk:'Some',
+      saveScore:100,
+      grade:'A', oppLevel:'0',
+      gradeRecv:'A',
+      killOpp:'0',
+      spellLvl:1, casterLvl:1,
+      note:'',
+    },
+    filter: 'all',
+    toastShow: false,
+    toastMsg: '',
+    _toastTimer: null,
+
+    // Static select data
+    maneuverDiffs: [
+      {v:'Routine',       k:'diff_routine', xp:0},
+      {v:'Easy',          k:'diff_easy',    xp:5},
+      {v:'Light',         k:'diff_light',   xp:10},
+      {v:'Medium',        k:'diff_medium',  xp:50},
+      {v:'Hard',          k:'diff_hard',    xp:100},
+      {v:'Very Hard',     k:'diff_vhard',   xp:150},
+      {v:'Extremely Hard',k:'diff_ehard',   xp:200},
+      {v:'Sheer Folly',   k:'diff_folly',   xp:300},
+      {v:'Absurd',        k:'diff_absurd',  xp:500},
+    ],
+    maneuverRisks: [
+      {v:'None',    k:'risk_none',    mult:0.5},
+      {v:'Some',    k:'risk_some',    mult:1.0},
+      {v:'Peril',   k:'risk_peril',   mult:2.0},
+      {v:'Grave',   k:'risk_grave',   mult:3.0},
+      {v:'Extreme', k:'risk_extreme', mult:4.0},
+    ],
+    killLevels: [0,1,2,3,4,5,6,7,8,9,'10+'],
+
+    init() {
+      let saved = null;
+      try { const s = localStorage.getItem('cb_state'); saved = s ? JSON.parse(s) : null; } catch(e) {}
+      if (saved) {
+        // migrate legacy key
+        if (saved.startCp !== undefined && saved.startXp === undefined) {
+          saved.startXp = saved.startCp; delete saved.startCp;
+        }
+        this.char = { name:'', level:1, startXp:0, notes:'', log:[], ...saved };
+      }
+      if (this.char.name) this.view = 'dashboard';
+    },
+
+    T(k) { return (STRINGS[this.lang] || STRINGS.en)[k] || k; },
+
+    get langFlag() { return { en:'🇬🇧', it:'🇮🇹' }[this.lang]; },
+
+    toggleLang() {
+      this.lang = this.lang === 'en' ? 'it' : 'en';
+      localStorage.setItem('cb_lang', this.lang);
+    },
+
+    saveState() {
+      try { localStorage.setItem('cb_state', JSON.stringify(this.char)); } catch(e) {}
+    },
+
+    saveCharacter() {
+      this.char.level   = parseInt(this.char.level)   || 1;
+      this.char.startXp = parseInt(this.char.startXp) || 0;
+      this.saveState();
+      this.showToast(this.T('setup_saved'));
+    },
+
+    confirmReset() {
+      if (confirm(this.T('reset_confirm'))) {
+        this.char = { name:'', level:1, startXp:0, notes:'', log:[] };
+        this.saveState();
+        this.view = 'setup';
+        this.showToast('\u2713');
+      }
+    },
+
+    get totalXP() {
+      return (parseInt(this.char.startXp) || 0) +
+        this.char.log.filter(e => e.cat !== 'levelup').reduce((s, e) => s + (parseInt(e.xp) || 0), 0);
+    },
+
+    xpByCategory(cat) {
+      return this.char.log.filter(e => e.cat === cat).reduce((s, e) => s + (parseInt(e.xp) || 0), 0);
+    },
+
+    openModal(type) {
+      this.modal.type = type;
+      this.modal.note = '';
+      if (type === 'spell') this.modal.casterLvl = this.char.level;
+      this.modal.open = true;
+      document.body.style.overflow = 'hidden';
+    },
+
+    closeModal() {
+      this.modal.open = false;
+      document.body.style.overflow = '';
+    },
+
+    calcXP() {
+      const m = this.modal;
+      if (m.type === 'maneuver') return Math.round(MANEUVER_XP[m.diff] * MANEUVER_RISK[m.risk]);
+      if (m.type === 'save')     { const v = parseInt(m.saveScore); return isNaN(v) ? null : v; }
+      if (m.type === 'crit-done') return getCritDoneXP(m.oppLevel, m.grade);
+      if (m.type === 'crit-recv') return CRIT_RECV_TABLE[m.gradeRecv];
+      if (m.type === 'kill')     return getKillXP(String(m.killOpp), this.char.level);
+      if (m.type === 'spell')    return getSpellXP(m.spellLvl, m.casterLvl);
+      return null;
+    },
+
+    get xpPreview() { return this.calcXP(); },
+
+    get xpPreviewDisplay() {
+      const xp = this.xpPreview;
+      if (xp === null || isNaN(xp)) return '\u2014';
+      if (xp > 0) return '+' + xp.toLocaleString();
+      return '0';
+    },
+
+    get xpPreviewIsZero() {
+      const xp = this.xpPreview;
+      return xp === null || isNaN(xp) || xp === 0;
+    },
+
+    get confirmDisabled() {
+      const xp = this.xpPreview;
+      return xp === null || isNaN(xp);
+    },
+
+    get modalTitle() {
+      const map = {
+        maneuver:   this.T('modal_maneuver'),
+        save:       this.T('modal_save'),
+        'crit-done':this.T('modal_crit_done'),
+        'crit-recv':this.T('modal_crit_recv'),
+        kill:       this.T('modal_kill'),
+        spell:      this.T('modal_spell'),
+      };
+      return map[this.modal.type] || '';
+    },
+
+    buildDescData() {
+      const m = this.modal, type = m.type;
+      if (type === 'maneuver')  return { type, diff:m.diff, risk:m.risk };
+      if (type === 'save')      return { type, score:m.saveScore };
+      if (type === 'crit-done') return { type, grade:m.grade, opp:m.oppLevel };
+      if (type === 'crit-recv') return { type, grade:m.gradeRecv };
+      if (type === 'kill')      return { type, opp:m.killOpp, you:this.char.level };
+      if (type === 'spell')     return { type, spell:m.spellLvl, caster:m.casterLvl };
+      return { type };
+    },
+
+    renderDesc(d) {
+      if (!d) return '';
+      if (d.type === 'maneuver')  return `${this.T('desc_maneuver')}: ${this.T(DIFF_KEYS[d.diff]||d.diff)} / ${this.T(RISK_KEYS[d.risk]||d.risk)}`;
+      if (d.type === 'save')      return `${this.T('desc_save')}: ${d.score}`;
+      if (d.type === 'crit-done') return `${this.T('desc_critd_grade')} ${d.grade} ${this.T('desc_critd_opp')} Lv${d.opp}`;
+      if (d.type === 'crit-recv') return `${this.T('desc_critr_grade')} ${d.grade}`;
+      if (d.type === 'kill')      return `${this.T('desc_kill')} Lv${d.opp} (${this.T('desc_kill_you')} ${d.you})`;
+      if (d.type === 'spell')     return `${this.T('desc_spell')} Lv${d.spell} / ${this.T('desc_spell_caster')} Lv${d.caster}`;
+      if (d.type === 'levelup')   return d.fallback || '';
+      return '';
+    },
+
+    confirmXP() {
+      const xp = this.xpPreview;
+      if (xp === null) return;
+      this.char.log.push({
+        id: Date.now(),
+        cat: this.modal.type,
+        xp,
+        descData: this.buildDescData(),
+        note: this.modal.note || '',
+        ts: new Date().toISOString(),
+      });
+      this.saveState();
+      this.closeModal();
+      this.showToast(`+${xp.toLocaleString()} XP`);
+    },
+
+    deleteEntry(id) {
+      this.char.log = this.char.log.filter(e => e.id !== id);
+      this.saveState();
+    },
+
+    get filteredLog() {
+      return [...this.char.log].reverse().filter(e => this.filter === 'all' || e.cat === this.filter);
+    },
+
+    catLabel(cat) {
+      return ({
+        maneuver:   this.T('cat_maneuver'),
+        save:       this.T('cat_save'),
+        'crit-done':this.T('cat_crit_done'),
+        'crit-recv':this.T('cat_crit_recv'),
+        kill:       this.T('cat_kill'),
+        spell:      this.T('cat_spell'),
+        levelup:    this.T('entry_levelup'),
+      })[cat] || cat;
+    },
+
+    entryXpStr(e) {
+      if (e.cat === 'levelup') return '';
+      return '+' + (parseInt(e.xp) || 0).toLocaleString();
+    },
+
+    entryTime(e) {
+      return new Date(e.ts).toLocaleString(
+        this.lang === 'it' ? 'it-IT' : 'en-GB',
+        { dateStyle:'short', timeStyle:'short' }
+      );
+    },
+
+    showToast(msg) {
+      this.toastMsg  = msg;
+      this.toastShow = true;
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => { this.toastShow = false; }, 2500);
+    },
+  };
 }
-function defaultState() { return { name:'', level:1, startXp:0, log:[], notes:'' }; }
-function saveState(st) {
-  try { localStorage.setItem('cb_state', JSON.stringify(st)); }
-  catch(e) { console.warn('localStorage unavailable'); }
-}
-
-let state = loadState();
-
-function totalXP() { return (parseInt(state.startXp)||0) + state.log.filter(e=>e.cat!=='levelup').reduce((s,e)=>s+(parseInt(e.xp)||0),0); }
-function xpByCategory(cat) { return state.log.filter(e=>e.cat===cat).reduce((s,e)=>s+(parseInt(e.xp)||0),0); }
-// ═══════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════
-let currentView = 'setup';
-function showView(v) {
-  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(el=>el.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
-  document.getElementById('nav-'+v).classList.add('active');
-  currentView = v;
-  if (v==='journal')   renderJournal();
-  if (v==='dashboard') updateDashboard();
-  if (v==='setup')     renderSetup();
-}
-
-// ═══════════════════════════════════════════
-// HEADER
-// ═══════════════════════════════════════════
-function updateHeader() {
-  document.getElementById('headerName').textContent = state.name || '—';
-  document.getElementById('headerLevel').textContent = state.name ? `${T('char_level')} ${state.level}` : '';
-}
-
-// ═══════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════
-function updateDashboard() {
-  const xp = totalXP();
-  document.getElementById('totalXpDisplay').textContent = xp.toLocaleString();
-
-  ['maneuver','save','crit-done','crit-recv','kill','spell'].forEach(cat => {
-    document.getElementById('stat-'+cat).textContent = xpByCategory(cat).toLocaleString();
-  });
-}
-
-// ═══════════════════════════════════════════
-// LOG XP MODALS
-// ═══════════════════════════════════════════
-function openModal(type) {
-  document.getElementById('modalContent').innerHTML = buildModalContent(type);
-  document.getElementById('modalBackdrop').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  setTimeout(()=>updatePreview(type), 10);
-}
-function closeModal() {
-  document.getElementById('modalBackdrop').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeModalOnBackdrop(e) { if(e.target===document.getElementById('modalBackdrop')) closeModal(); }
-
-function buildModalContent(type) {
-  const titles = { maneuver:T('modal_maneuver'), save:T('modal_save'),
-    'crit-done':T('modal_crit_done'), 'crit-recv':T('modal_crit_recv'),
-    kill:T('modal_kill'), spell:T('modal_spell') };
-
-  let body = '';
-  const grades = ['A','B','C','D','E','F'];
-
-  if (type==='maneuver') {
-    const diffs = [['Routine','diff_routine'],['Easy','diff_easy'],['Light','diff_light'],['Medium','diff_medium'],['Hard','diff_hard'],['Very Hard','diff_vhard'],['Extremely Hard','diff_ehard'],['Sheer Folly','diff_folly'],['Absurd','diff_absurd']];
-    const risks  = [['None','risk_none'],['Some','risk_some'],['Peril','risk_peril'],['Grave','risk_grave'],['Extreme','risk_extreme']];
-    body = `
-      <div class="form-group">
-        <label class="form-label">${T('lbl_difficulty')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_diff" onchange="updatePreview('maneuver')">
-          ${diffs.map(([v,k])=>`<option value="${v}" ${v==='Medium'?'selected':''}>${T(k)} — ${MANEUVER_XP[v]}</option>`).join('')}
-        </select></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${T('lbl_risk')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_risk" onchange="updatePreview('maneuver')">
-          ${risks.map(([v,k])=>`<option value="${v}" ${v==='Some'?'selected':''}>${T(k)} — ×${MANEUVER_RISK[v]}</option>`).join('')}
-        </select></div>
-      </div>`;
-  }
-  if (type==='save') {
-    body = `<div class="form-group">
-      <label class="form-label">${T('lbl_save_score')}</label>
-      <input class="form-input" id="m_save" type="number" min="1" max="999" placeholder="100" value="100" oninput="updatePreview('save')">
-    </div>`;
-  }
-  if (type==='crit-done') {
-    body = `
-      <div class="form-group">
-        <label class="form-label">${T('lbl_crit_grade')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_grade" onchange="updatePreview('crit-done')">
-          ${grades.map(g=>`<option value="${g}">${g}</option>`).join('')}
-        </select></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${T('lbl_opp_level')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_oppLevel" onchange="updatePreview('crit-done')">
-          ${Array.from({length:21},(_,i)=>`<option value="${i}">${i}${i===10?'+':''}</option>`).join('')}
-        </select></div>
-      </div>`;
-  }
-  if (type==='crit-recv') {
-    body = `<div class="form-group">
-      <label class="form-label">${T('lbl_crit_grade')}</label>
-      <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px">${T('foe_level_note')}</p>
-      <div class="select-wrap"><select class="form-select" id="m_grade_recv" onchange="updatePreview('crit-recv')">
-        ${grades.map(g=>`<option value="${g}">${g} — ${CRIT_RECV_TABLE[g]} XP</option>`).join('')}
-      </select></div>
-    </div>`;
-  }
-  if (type==='kill') {
-    body = `<div class="form-group">
-      <label class="form-label">${T('lbl_opp_level')}</label>
-      <div class="select-wrap"><select class="form-select" id="m_killOpp" onchange="updatePreview('kill')">
-        ${[0,1,2,3,4,5,6,7,8,9,'10+'].map(l=>`<option value="${l}">${l}</option>`).join('')}
-      </select></div>
-    </div>
-    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">${T('your_level')}: <strong>${state.level}</strong></p>`;
-  }
-  if (type==='spell') {
-    body = `
-      <div class="form-group">
-        <label class="form-label">${T('lbl_spell_level')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_spellLvl" onchange="updatePreview('spell')">
-          ${Array.from({length:11},(_,i)=>i+1).map(l=>`<option value="${l}">${l}${l===11?'+':''}</option>`).join('')}
-        </select></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${T('lbl_caster_level')}</label>
-        <div class="select-wrap"><select class="form-select" id="m_casterLvl" onchange="updatePreview('spell')">
-          ${Array.from({length:15},(_,i)=>i+1).map(l=>`<option value="${l}" ${l===state.level?'selected':''}>${l}</option>`).join('')}
-        </select></div>
-      </div>`;
-  }
-
-  return `
-    <div class="modal-header">
-      <span class="modal-title">${titles[type]||''}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    ${body}
-    <div class="xp-preview">
-      <div class="xp-preview-label">${T('lbl_xp_earned')}</div>
-      <div class="xp-preview-value zero" id="xpPreview">—</div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">${T('lbl_note')}</label>
-      <input class="form-input" id="m_note" type="text" placeholder="...">
-    </div>
-    <button class="submit-btn" id="confirmBtn" onclick="confirmXP('${type}')" disabled>${T('btn_confirm')}</button>`;
-}
-
-function updatePreview(type) {
-  const xp  = calcXP(type);
-  const el  = document.getElementById('xpPreview');
-  const btn = document.getElementById('confirmBtn');
-  if (!el || !btn) return;
-  if (xp !== null && !isNaN(xp) && xp > 0) {
-    el.textContent = '+' + xp.toLocaleString();
-    el.className = 'xp-preview-value';
-    btn.disabled = false;
-  } else if (xp === 0) {
-    el.textContent = '0';
-    el.className = 'xp-preview-value zero';
-    btn.disabled = false;
-  } else {
-    el.textContent = '—';
-    el.className = 'xp-preview-value zero';
-    btn.disabled = true;
-  }
-}
-
-function calcXP(type) {
-  if (type==='maneuver') {
-    const d=document.getElementById('m_diff')?.value, r=document.getElementById('m_risk')?.value;
-    return (!d||!r)?null:Math.round(MANEUVER_XP[d]*MANEUVER_RISK[r]);
-  }
-  if (type==='save') { const v=parseInt(document.getElementById('m_save')?.value); return isNaN(v)?null:v; }
-  if (type==='crit-done') {
-    const ol=document.getElementById('m_oppLevel')?.value, g=document.getElementById('m_grade')?.value;
-    return (ol!=null&&g)?getCritDoneXP(ol,g):null;
-  }
-  if (type==='crit-recv') { const g=document.getElementById('m_grade_recv')?.value; return g?CRIT_RECV_TABLE[g]:null; }
-  if (type==='kill') { const ol=document.getElementById('m_killOpp')?.value; return ol!=null?getKillXP(ol,state.level):null; }
-  if (type==='spell') {
-    const sl=document.getElementById('m_spellLvl')?.value, cl=document.getElementById('m_casterLvl')?.value;
-    return (sl&&cl)?getSpellXP(sl,cl):null;
-  }
-  return null;
-}
-
-// Build a structured description object (keys + values) so it can be re-localised on the fly
-function buildDescData(type) {
-  if (type==='maneuver') return { type, diff:document.getElementById('m_diff').value, risk:document.getElementById('m_risk').value };
-  if (type==='save')     return { type, score:document.getElementById('m_save').value };
-  if (type==='crit-done') return { type, grade:document.getElementById('m_grade').value, opp:document.getElementById('m_oppLevel').value };
-  if (type==='crit-recv') return { type, grade:document.getElementById('m_grade_recv').value };
-  if (type==='kill')     return { type, opp:document.getElementById('m_killOpp').value, you:state.level };
-  if (type==='spell')    return { type, spell:document.getElementById('m_spellLvl').value, caster:document.getElementById('m_casterLvl').value };
-  return { type };
-}
-
-// Render a desc object to a localised string
-function renderDesc(d) {
-  if (!d) return '';
-  if (d.type==='maneuver') return `${T('desc_maneuver')}: ${localDiff(d.diff)} / ${localRisk(d.risk)}`;
-  if (d.type==='save')     return `${T('desc_save')}: ${d.score}`;
-  if (d.type==='crit-done') return `${T('desc_critd_grade')} ${d.grade} ${T('desc_critd_opp')} Lv${d.opp}`;
-  if (d.type==='crit-recv') return `${T('desc_critr_grade')} ${d.grade}`;
-  if (d.type==='kill')     return `${T('desc_kill')} Lv${d.opp} (${T('desc_kill_you')} ${d.you})`;
-  if (d.type==='spell')    return `${T('desc_spell')} Lv${d.spell} / ${T('desc_spell_caster')} Lv${d.caster}`;
-  if (d.type==='levelup')  return d.fallback || '';
-  return '';
-}
-
-const DIFF_KEYS = { 'Routine':'diff_routine','Easy':'diff_easy','Light':'diff_light','Medium':'diff_medium','Hard':'diff_hard','Very Hard':'diff_vhard','Extremely Hard':'diff_ehard','Sheer Folly':'diff_folly','Absurd':'diff_absurd' };
-const RISK_KEYS = { 'None':'risk_none','Some':'risk_some','Peril':'risk_peril','Grave':'risk_grave','Extreme':'risk_extreme' };
-function localDiff(v) { return T(DIFF_KEYS[v]||v); }
-function localRisk(v) { return T(RISK_KEYS[v]||v); }
-
-function confirmXP(type) {
-  const xp = calcXP(type);
-  if (xp===null) return;
-  const descData = buildDescData(type);
-  state.log.push({ id:Date.now(), cat:type, xp, descData, note:document.getElementById('m_note')?.value||'', ts:new Date().toISOString() });
-  saveState(state);
-  updateHeader(); updateDashboard();
-  closeModal();
-  showToast(`+${xp.toLocaleString()} XP`);
-}
-
-// ═══════════════════════════════════════════
-// JOURNAL
-// ═══════════════════════════════════════════
-let activeFilter = 'all';
-function setFilter(f) {
-  activeFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===f));
-  renderJournal();
-}
-
-function renderJournal() {
-  const list = document.getElementById('journalList');
-  const entries = [...state.log].reverse().filter(e=>activeFilter==='all'||e.cat===activeFilter);
-  if (!entries.length) { list.innerHTML=`<div class="journal-empty">${T('no_entries')}</div>`; return; }
-
-  const catLabel = cat => ({ maneuver:T('cat_maneuver'), save:T('cat_save'), 'crit-done':T('cat_crit_done'),
-    'crit-recv':T('cat_crit_recv'), kill:T('cat_kill'), spell:T('cat_spell'), levelup:T('entry_levelup') }[cat]||cat);
-
-  list.innerHTML = entries.map(e => {
-    const dt = new Date(e.ts).toLocaleString(lang==='it'?'it-IT':'en-GB',{dateStyle:'short',timeStyle:'short'});
-    const xpVal = parseInt(e.xp) || 0;
-    const xpStr = e.cat==='levelup' ? '' : `+${xpVal.toLocaleString()}`;
-    const desc = e.descData ? renderDesc(e.descData) : (e.desc || '');
-    return `<div class="journal-entry ${e.cat}">
-      <div class="entry-top">
-        <span class="entry-cat">${catLabel(e.cat)}</span>
-        <span class="entry-xp">${xpStr}</span>
-      </div>
-      <div class="entry-desc">${desc}</div>
-      ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
-      <div class="entry-time">${dt}</div>
-      <button class="entry-delete" onclick="deleteEntry(${e.id})">✕</button>
-    </div>`;
-  }).join('');
-}
-
-function deleteEntry(id) {
-  state.log = state.log.filter(e=>e.id!==id);
-  saveState(state); updateHeader(); updateDashboard(); renderJournal();
-}
-
-// ═══════════════════════════════════════════
-// SETUP
-// ═══════════════════════════════════════════
-function renderSetup() {
-  document.getElementById('inputName').value    = state.name || '';
-  document.getElementById('inputLevel').value  = state.level;
-  document.getElementById('inputStartXp').value = state.startXp || 0;
-  document.getElementById('notesArea').value    = state.notes || '';
-}
-
-function saveCharacter() {
-  const lvl = parseInt(document.getElementById('inputLevel').value) || 1;
-  const xp  = parseInt(document.getElementById('inputStartXp').value) || 0;
-  state.name  = document.getElementById('inputName').value.trim();
-  state.level = lvl;
-  state.startXp    = xp;
-  saveState(state);
-  updateHeader(); updateDashboard();
-  showToast(T('setup_saved'));
-}
-
-function saveNotes() {
-  state.notes = document.getElementById('notesArea').value;
-  saveState(state);
-}
-
-function confirmReset() {
-  if (confirm(T('reset_confirm'))) {
-    state = defaultState();
-    saveState(state);
-    updateHeader(); updateDashboard(); renderSetup();
-    if (currentView==='journal') renderJournal();
-    showToast('✓');
-  }
-}
-
-// ═══════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════
-function showToast(msg) {
-  const el=document.getElementById('toastEl');
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2500);
-}
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  // Migrate old state: cb_state used 'startCp' key, rename to 'startXp'
-  if (state.startCp !== undefined && state.startXp === undefined) {
-    state.startXp = state.startCp; delete state.startCp; saveState(state);
-  }
-  updateLangBtn();
-  applyI18n();
-  updateHeader();
-  updateDashboard();
-  renderSetup();
-  // Start on setup if no character saved yet, otherwise overview
-  if (state.name) showView('dashboard');
-  else showView('setup');
-});
 </script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
