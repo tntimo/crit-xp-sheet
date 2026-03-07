@@ -126,8 +126,15 @@
   .select-wrap::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text2); pointer-events: none; font-size: 0.75rem; }
   .xp-preview { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; margin: 12px 0; }
   .xp-preview-label { font-size: 0.72rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; }
-  .xp-preview-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text); margin-top: 2px; }
+  .xp-preview-value { font-size: 2.6rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text); margin-top: 2px; }
   .xp-preview-value.zero { color: var(--text3); }
+  .opt-btn-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  .opt-btn-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .opt-btn { padding: 7px 4px; border-radius: 7px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--text2); text-align: center; transition: all 0.12s; line-height: 1.2; }
+  .opt-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .opt-btn:active { transform: scale(0.95); }
+  .opt-btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+  .opt-sub { font-size: 0.65rem; font-weight: 500; opacity: 0.8; display: block; margin-top: 1px; }
   .submit-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.9rem; font-weight: 700; color: #fff; transition: opacity 0.15s; }
   .submit-btn:active { opacity: 0.85; }
   .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -237,32 +244,32 @@
       <div class="dashboard">
         <div class="xp-total-card">
           <div class="xp-total-label" x-text="T('total_xp')"></div>
-          <div class="xp-total-number" x-text="totalXP.toLocaleString()"></div>
+          <div class="xp-total-number" x-text="totalXP"></div>
         </div>
         <div class="stats-grid">
           <div class="stat-card maneuver">
             <div class="stat-card-label" x-text="T('cat_maneuver')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('maneuver').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('maneuver')"></div>
           </div>
           <div class="stat-card save">
             <div class="stat-card-label" x-text="T('cat_save')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('save').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('save')"></div>
           </div>
           <div class="stat-card crit-done">
             <div class="stat-card-label" x-text="T('cat_crit_done')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('crit-done').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('crit-done')"></div>
           </div>
           <div class="stat-card crit-recv">
             <div class="stat-card-label" x-text="T('cat_crit_recv')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('crit-recv').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('crit-recv')"></div>
           </div>
           <div class="stat-card kill">
             <div class="stat-card-label" x-text="T('cat_kill')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('kill').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('kill')"></div>
           </div>
           <div class="stat-card spell">
             <div class="stat-card-label" x-text="T('cat_spell')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('spell').toLocaleString()"></div>
+            <div class="stat-card-value" x-text="xpByCategory('spell')"></div>
           </div>
         </div>
         <button class="submit-btn" @click="view = 'log'" x-text="T('btn_log_xp')"></button>
@@ -342,120 +349,170 @@
 
     <!-- Maneuver -->
     <div x-show="modal.type === 'maneuver'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_difficulty')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.diff">
-            <template x-for="d in maneuverDiffs" :key="d.v">
-              <option :value="d.v" x-text="`${T(d.k)} \u2014 ${d.xp}`"></option>
-            </template>
-          </select>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group">
+            <label class="form-label" x-text="T('lbl_difficulty')"></label>
+            <div class="opt-btn-grid">
+              <template x-for="d in maneuverDiffs" :key="d.v">
+                <button class="opt-btn" :class="{ selected: modal.diff === d.v }" @click="modal.diff = d.v">
+                  <span x-text="T(d.k)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" x-text="T('lbl_risk')"></label>
+            <div class="opt-btn-group">
+              <template x-for="r in maneuverRisks" :key="r.v">
+                <button class="opt-btn" style="flex:1;" :class="{ selected: modal.risk === r.v }" @click="modal.risk = r.v">
+                  <span x-text="T(r.k)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_risk')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.risk">
-            <template x-for="r in maneuverRisks" :key="r.v">
-              <option :value="r.v" x-text="`${T(r.k)} \u2014 \xd7${r.mult}`"></option>
-            </template>
-          </select>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Save -->
     <div x-show="modal.type === 'save'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_save_score')"></label>
-        <input class="form-input" x-model.number="modal.saveScore" type="number" min="1" max="999" placeholder="100">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group">
+            <label class="form-label" x-text="T('lbl_save_score')"></label>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
+              <template x-for="v in [40,60,80,100,120,140,160,180]" :key="v">
+                <button class="opt-btn" :class="{ selected: modal.saveScore === v }" @click="modal.saveScore = v" x-text="String(v)"></button>
+              </template>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label class="form-label" style="margin:0;white-space:nowrap;" x-text="T('lbl_difficulty')"></label>
+              <input class="form-input" x-model.number="modal.saveScore" type="number" min="1" max="9999" placeholder="...">
+            </div>
+          </div>
+        </div>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Crit Done -->
     <div x-show="modal.type === 'crit-done'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_crit_grade')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.grade">
-            <template x-for="g in ['A','B','C','D','E','F']" :key="g">
-              <option :value="g" x-text="g"></option>
-            </template>
-          </select>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group">
+            <label class="form-label" x-text="T('lbl_crit_grade')"></label>
+            <div style="display:flex;gap:5px;">
+              <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+                <button class="opt-btn" style="flex:1;" :class="{ selected: modal.grade === g }" @click="modal.grade = g" x-text="g"></button>
+              </template>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" x-text="T('lbl_opp_level')"></label>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+              <template x-for="i in 21" :key="i">
+                <button class="opt-btn" :class="{ selected: modal.oppLevel === String(i-1) }" :disabled="i === 1" @click="modal.oppLevel = String(i-1)" x-text="String(i-1)"></button>
+              </template>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_opp_level')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.oppLevel">
-            <template x-for="i in 21" :key="i">
-              <option :value="String(i - 1)" x-text="i - 1 === 10 ? '10+' : String(i - 1)"></option>
-            </template>
-          </select>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Crit Received -->
     <div x-show="modal.type === 'crit-recv'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_crit_grade')"></label>
-        <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.gradeRecv">
-            <template x-for="g in ['A','B','C','D','E','F']" :key="g">
-              <option :value="g" x-text="`${g} \u2014 ${CRIT_RECV_TABLE[g]} XP`"></option>
-            </template>
-          </select>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" x-text="T('lbl_crit_grade')"></label>
+            <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
+            <div style="display:flex;gap:5px;">
+              <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+                <button class="opt-btn" style="flex:1;" :class="{ selected: modal.gradeRecv === g }" @click="modal.gradeRecv = g" x-text="g"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Kill -->
     <div x-show="modal.type === 'kill'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_opp_level')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model="modal.killOpp">
-            <template x-for="l in killLevels" :key="String(l)">
-              <option :value="String(l)" x-text="String(l)"></option>
-            </template>
-          </select>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" x-text="T('lbl_opp_level')"></label>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;">
+              <template x-for="l in 20" :key="l">
+                <button class="opt-btn" :class="{ selected: modal.killOpp === String(l) }" @click="modal.killOpp = String(l)" x-text="String(l)"></button>
+              </template>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text2);">
+              <span x-text="T('your_level')"></span>: <strong x-text="char.level"></strong>
+            </p>
+          </div>
+        </div>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
         </div>
       </div>
-      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">
-        <span x-text="T('your_level')"></span>: <strong x-text="char.level"></strong>
-      </p>
     </div>
 
     <!-- Spell -->
     <div x-show="modal.type === 'spell'">
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_spell_level')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model.number="modal.spellLvl">
-            <template x-for="l in 11" :key="l">
-              <option :value="l" x-text="l === 11 ? '11+' : String(l)"></option>
-            </template>
-          </select>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="form-group">
+            <label class="form-label" x-text="T('lbl_spell_level')"></label>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+              <template x-for="l in 11" :key="l">
+                <button class="opt-btn" :class="{ selected: modal.spellLvl === l }" @click="modal.spellLvl = l" x-text="l === 11 ? '11+' : String(l)"></button>
+              </template>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" x-text="T('lbl_caster_level')"></label>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">
+              <template x-for="l in 15" :key="l">
+                <button class="opt-btn" :class="{ selected: modal.casterLvl === l }" @click="modal.casterLvl = l" x-text="String(l)"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div style="width:88px;flex-shrink:0;padding-top:20px;">
+          <div class="xp-preview" style="margin:0;">
+            <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
+            <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
+          </div>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label" x-text="T('lbl_caster_level')"></label>
-        <div class="select-wrap">
-          <select class="form-select" x-model.number="modal.casterLvl">
-            <template x-for="l in 15" :key="l">
-              <option :value="l" x-text="String(l)"></option>
-            </template>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- XP Preview -->
-    <div class="xp-preview">
-      <div class="xp-preview-label" x-text="T('lbl_xp_earned')"></div>
-      <div class="xp-preview-value" :class="{ zero: xpPreviewIsZero }" x-text="xpPreviewDisplay"></div>
     </div>
 
     <!-- Note -->
@@ -631,9 +688,9 @@ function app() {
       open:false, type:null,
       diff:'Medium', risk:'Some',
       saveScore:100,
-      grade:'A', oppLevel:'0',
+      grade:'A', oppLevel:'1',
       gradeRecv:'A',
-      killOpp:'0',
+      killOpp:'1',
       spellLvl:1, casterLvl:1,
       note:'',
     },
@@ -743,7 +800,7 @@ function app() {
     get xpPreviewDisplay() {
       const xp = this.xpPreview;
       if (xp === null || isNaN(xp)) return '\u2014';
-      if (xp > 0) return '+' + xp.toLocaleString();
+      if (xp > 0) return String(xp);
       return '0';
     },
 
@@ -805,7 +862,7 @@ function app() {
       });
       this.saveState();
       this.closeModal();
-      this.showToast(`+${xp.toLocaleString()} XP`);
+      this.showToast(`${xp} XP`);
     },
 
     deleteEntry(id) {
@@ -831,7 +888,7 @@ function app() {
 
     entryXpStr(e) {
       if (e.cat === 'levelup') return '';
-      return '+' + (parseInt(e.xp) || 0).toLocaleString();
+      return String(parseInt(e.xp) || 0);
     },
 
     entryTime(e) {
