@@ -314,12 +314,12 @@
       <div class="journal-view">
         <div class="filter-row">
           <button class="filter-chip" :class="{ active: filter === 'all' }"       @click="filter = 'all'"       x-text="T('filter_all')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'maneuver' }"  @click="filter = 'maneuver'"  x-text="T('cat_maneuver')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'save' }"      @click="filter = 'save'"      x-text="T('cat_save')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'crit-done' }" @click="filter = 'crit-done'" x-text="T('cat_crit_done')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'crit-recv' }" @click="filter = 'crit-recv'" x-text="T('cat_crit_recv')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'kill' }"      @click="filter = 'kill'"      x-text="T('cat_kill')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'spell' }"     @click="filter = 'spell'"     x-text="T('cat_spell')"></button>
+          <button class="filter-chip" :class="{ active: filter === 'maneuver' }"  @click="filter = 'maneuver'" >&#129336; <span x-text="T('cat_maneuver')"></span></button>
+          <button class="filter-chip" :class="{ active: filter === 'save' }"      @click="filter = 'save'"     >&#128737;&#65039; <span x-text="T('cat_save')"></span></button>
+          <button class="filter-chip" :class="{ active: filter === 'crit-done' }" @click="filter = 'crit-done'">&#127919; <span x-text="T('cat_crit_done')"></span></button>
+          <button class="filter-chip" :class="{ active: filter === 'crit-recv' }" @click="filter = 'crit-recv'">&#129656; <span x-text="T('cat_crit_recv')"></span></button>
+          <button class="filter-chip" :class="{ active: filter === 'kill' }"      @click="filter = 'kill'"     >&#128128; <span x-text="T('cat_kill')"></span></button>
+          <button class="filter-chip" :class="{ active: filter === 'spell' }"     @click="filter = 'spell'"    >&#10024; <span x-text="T('cat_spell')"></span></button>
         </div>
         <div x-show="filteredLog.length === 0" class="journal-empty" x-text="T('no_entries')"></div>
         <template x-for="entry in filteredLog" :key="entry.id">
