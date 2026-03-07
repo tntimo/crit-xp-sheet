@@ -198,13 +198,13 @@
 
   <nav>
     <button @click="view = 'setup'" :class="{ active: view === 'setup' }">
-      <span class="nav-icon">&#9881;</span><span x-text="T('nav_setup')"></span>
+      <span class="nav-icon">&#129497;</span><span x-text="T('nav_setup')"></span>
     </button>
     <button @click="view = 'dashboard'" :class="{ active: view === 'dashboard' }">
-      <span class="nav-icon">&#127968;</span><span x-text="T('nav_dash')"></span>
+      <span class="nav-icon">&#129518;</span><span x-text="T('nav_dash')"></span>
     </button>
     <button @click="view = 'log'" :class="{ active: view === 'log' }">
-      <span class="nav-icon">&#9889;</span><span x-text="T('nav_log')"></span>
+      <span class="nav-icon">&#9999;&#65039;</span><span x-text="T('nav_log')"></span>
     </button>
     <button @click="view = 'journal'" :class="{ active: view === 'journal' }">
       <span class="nav-icon">&#128220;</span><span x-text="T('nav_journal')"></span>
@@ -282,7 +282,7 @@
         <div class="section-title" x-text="T('choose_action')"></div>
         <div class="action-grid">
           <button class="action-btn" @click="openModal('maneuver')">
-            <span class="btn-icon">&#128481;&#65039;</span>
+            <span class="btn-icon">&#129336;</span>
             <span class="btn-label" x-text="T('cat_maneuver')"></span>
           </button>
           <button class="action-btn" @click="openModal('save')">
@@ -290,7 +290,7 @@
             <span class="btn-label" x-text="T('cat_save')"></span>
           </button>
           <button class="action-btn" @click="openModal('crit-done')">
-            <span class="btn-icon">&#9876;&#65039;</span>
+            <span class="btn-icon">&#127919;</span>
             <span class="btn-label" x-text="T('cat_crit_done')"></span>
           </button>
           <button class="action-btn" @click="openModal('crit-recv')">
