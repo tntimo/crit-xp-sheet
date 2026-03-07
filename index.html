@@ -220,7 +220,6 @@
             <label class="form-label" data-i18n="starting_xp">Starting XP</label>
             <input class="form-input" id="inputStartXp" type="number" placeholder="0" min="0">
           </div>
-          <p class="info-note" data-i18n="setup_note">XP accumulates freely. Tap the Level Up banner to confirm your new level at the end of the adventure.</p>
           <button class="submit-btn" onclick="saveCharacter()" data-i18n="btn_save">Save Character</button>
           <button class="danger-btn" onclick="confirmReset()" data-i18n="btn_reset">Reset All Data</button>
         </div>
@@ -237,7 +236,7 @@
         <div class="xp-total-card">
           <div class="xp-total-label" data-i18n="total_xp">Total XP</div>
           <div class="xp-total-number" id="totalXpDisplay">0</div>
-          <div class="xp-total-sub" id="xpSubLine">—</div>
+
         </div>
         <div class="stats-grid">
           <div class="stat-card maneuver">
@@ -418,7 +417,6 @@ const STRINGS = {
     btn_confirm:'Record XP',
     char_level:'Level',
     setup_saved:'Saved!',
-    setup_note:'XP accumulates freely. Tap the Level Up banner to confirm at end of adventure.',
     reset_confirm:'Delete ALL data? This cannot be undone.',
     levelup_available:'Level Up Available!',
     levelup_modal_title:'Confirm Level Up',
@@ -427,8 +425,7 @@ const STRINGS = {
     levelup_done_msg:'Now level',
     entry_levelup:'⭐ Level Up',
     no_entries:'No entries yet.',
-    levels_gained:'Levels gained',
-    level_gained:'Level gained',
+
     xp_to_next:'XP to next level',
     your_level:'Your current level',
     foe_level_note:'Foe level always treated as 20',
@@ -464,7 +461,6 @@ const STRINGS = {
     btn_confirm:'Registra',
     char_level:'Livello',
     setup_saved:'Salvato!',
-    setup_note:'Le XP si accumulano liberamente. Tocca il banner per confermare l\'avanzamento a fine avventura.',
     reset_confirm:'Cancellare TUTTI i dati? Non si può annullare.',
     levelup_available:'Avanzamento Disponibile!',
     levelup_modal_title:'Conferma Avanzamento',
@@ -473,8 +469,7 @@ const STRINGS = {
     levelup_done_msg:'Ora al livello',
     entry_levelup:'⭐ Avanzamento',
     no_entries:'Nessuna voce ancora.',
-    levels_gained:'Livelli guadagnati',
-    level_gained:'Livello guadagnato',
+
     xp_to_next:'XP al prossimo livello',
     your_level:'Il tuo livello attuale',
     foe_level_note:'Il livello del nemico è sempre trattato come 20',
@@ -561,10 +556,7 @@ function updateHeader() {
 function updateDashboard() {
   const xp = totalXP();
   document.getElementById('totalXpDisplay').textContent = xp.toLocaleString();
-  const gained = state.level - (state.startLevel ?? state.level);
-  document.getElementById('xpSubLine').textContent = gained > 0
-    ? `${gained} ${gained === 1 ? T('level_gained') : T('levels_gained')}`
-    : '';
+
   ['maneuver','save','crit-done','crit-recv','kill','spell'].forEach(cat => {
     document.getElementById('stat-'+cat).textContent = xpByCategory(cat).toLocaleString();
   });
@@ -807,7 +799,7 @@ function deleteEntry(id) {
 // ═══════════════════════════════════════════
 function renderSetup() {
   document.getElementById('inputName').value    = state.name || '';
-  document.getElementById('inputLevel').value  = state.startLevel ?? state.level;
+  document.getElementById('inputLevel').value  = state.level;
   document.getElementById('inputStartXp').value = state.startXp || 0;
   document.getElementById('notesArea').value    = state.notes || '';
 }
@@ -815,9 +807,8 @@ function renderSetup() {
 function saveCharacter() {
   const lvl = parseInt(document.getElementById('inputLevel').value) || 1;
   const xp  = parseInt(document.getElementById('inputStartXp').value) || 0;
-  state.name       = document.getElementById('inputName').value.trim();
-  state.startLevel = lvl;
-  state.level      = lvl;
+  state.name  = document.getElementById('inputName').value.trim();
+  state.level = lvl;
   state.startXp    = xp;
   saveState(state);
   updateHeader(); updateDashboard();
@@ -856,8 +847,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (state.startCp !== undefined && state.startXp === undefined) {
     state.startXp = state.startCp; delete state.startCp; saveState(state);
   }
-  if (state.startLevel === undefined) state.startLevel = state.level;
-
   updateLangBtn();
   applyI18n();
   updateHeader();
