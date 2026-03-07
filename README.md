@@ -1,6 +1,6 @@
-# Critical Base · XP Sheet
+# Critical Based · XP Sheet
 
-A lightweight, mobile-friendly experience point tracker for tabletop RPGs — designed for systems where XP is earned through maneuvers, saving throws, criticals, kills, and spells.
+A lightweight, mobile-friendly experience point tracker for tabletop RPGs — designed for systems where XP is earned through maneuvers, saving throws, criticals, kills, and spells (e.g. HARP).
 
 **→ [Open the app](https://tntimo.github.io/crit-xp-sheet/)**
 
