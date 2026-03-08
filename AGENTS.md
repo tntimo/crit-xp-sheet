@@ -1,13 +1,13 @@
 # AGENTS.md — Developer Context for Critical Base · XP Sheet
 
-Single-file PWA (`index.html`) for tracking experience points in tabletop RPGs.
+PWA (`index.html`) for tracking experience points in tabletop RPGs.
 Live at: https://tntimo.github.io/crit-xp-sheet/
 
 ---
 
 ## Architecture
 
-Everything is in one HTML file: inline CSS, Alpine.js for reactivity (CDN), no build step.
+Currently everything is in `index.html` (inline CSS, inline JS). Additional `.css` / `.js` files alongside `index.html` are fine — GitHub Pages serves them with no build step. Alpine.js is loaded from CDN.
 Data persists in `localStorage` under key `cb_state`.
 Language preference persists under key `cb_lang`.
 
@@ -158,8 +158,8 @@ Category colours: `--c-maneuver` `--c-save` `--c-critd` `--c-critr` `--c-kill` `
 
 ## Key Constraints
 
-- **Single HTML file** — no external assets (except Alpine CDN), no build step, no npm.
-- **No localStorage in artifacts** — when prototyping changes as Claude artifacts, use in-memory state.
+- **No build step, no npm** — additional `.css` / `.js` files are fine, but there is no bundler. All assets must be plain files loadable directly by the browser.
+- **No localStorage in Claude artifacts** — when prototyping changes as Claude artifacts, use in-memory state.
 - **Alpine.js v3** — use `x-data`, `x-model`, `x-text`, `x-show`, `x-for`, `:class`, `@click`. No jQuery or other libs.
 - **Mobile-first** — max-width 480px, touch targets ≥ 44px, sticky header + nav.
 - **No XP thresholds** — different rule sets use different progressions; the app deliberately ignores level-up logic.
