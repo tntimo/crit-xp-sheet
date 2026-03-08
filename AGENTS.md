@@ -8,24 +8,54 @@ Live at: https://tntimo.github.io/crit-xp-sheet/
 ## Architecture
 
 Currently everything is in `index.html` (inline CSS, inline JS). Additional `.css` / `.js` files alongside `index.html` are fine — GitHub Pages serves them with no build step. Alpine.js is loaded from CDN.
-Data persists in `localStorage` under key `cb_state`.
-Language preference persists under key `cb_lang`.
 
 Alpine.js v3 is loaded from CDN (`defer`). The single `app()` factory function is bound to `<body x-data="app()" x-init="init()">`. All XP lookup tables and `STRINGS` are plain module-level constants outside the Alpine component.
+
+### localStorage keys
+
+| Key | Value | Notes |
+|---|---|---|
+| `cb_chars` | JSON array of character objects | Current multi-character format |
+| `cb_active_char` | character `id` (number as string) | Which character is active |
+| `cb_lang` | `'en'` or `'it'` | Language preference |
+| `cb_consent` | cookie `cb_consent=1` | Set as an actual cookie, not localStorage |
+
+**Legacy key:** `cb_state` (single-character JSON object) — migrated to `cb_chars` on first load, then deleted.
+
+### Storage backward compatibility
+
+**Always maintain backward compatibility.** New character fields must have sensible defaults so that existing saved data loads correctly. Use the spread-with-defaults pattern everywhere a character object is constructed:
+```js
+{ id: null, name:'', cls:'', level:1, startXp:0, log:[], ...saved }
+```
+Migrations belong in `init()`, following the existing patterns (`startCp → startXp`, `cb_state → cb_chars`).
 
 ---
 
 ## State Schema
 
+### Character object (stored in `cb_chars` array)
+
 ```js
 {
+  id:      number,   // Date.now() assigned on first save
   name:    string,   // character name
+  cls:     string,   // character class (optional, may be empty)
   level:   number,   // current level (manually set by user, not derived from XP)
   startXp: number,   // XP imported from before the session began
   log:     Entry[],  // ordered array of XP log entries
-  notes:   string    // free-text notes field
 }
 ```
+
+### Alpine component state
+
+```js
+characters:   Character[],  // full list, mirrors cb_chars
+activeCharId: number|null,  // id of the currently active character
+char:         Character,    // working copy of the active character
+```
+
+`saveState()` syncs `char` back into the `characters` array (via `splice`) and persists both `cb_chars` and `cb_active_char`.
 
 ### Log Entry
 
@@ -139,7 +169,7 @@ Difficulty and risk values are stored in English internally and translated via `
 
 Four tabs (left to right in nav): **Character** · **Overview** · **Log XP** · **Journal**
 
-- **Character** — name, starting level (number input), starting XP, notes textarea, save/reset buttons. Default tab on first load; goes to Overview if character already saved.
+- **Character** — two rows of paired fields (name+class, level+starting XP), save button. Below: character manager with "+ New Character" button and a list of all saved characters (click to switch, ✕ to delete with confirmation). Default tab on first load; goes to Overview if a character is already saved.
 - **Overview** — total XP card, 6 category stat cards (maneuver/save/crit-done/crit-recv/kill/spell), Log XP shortcut button.
 - **Log XP** — 6 action buttons → bottom-sheet modal with dropdowns, live XP preview, optional note.
 - **Journal** — filter chips (all + 6 categories, flex-wrap), entry list newest-first, each entry deletable.

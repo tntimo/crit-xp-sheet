@@ -167,8 +167,14 @@
   .setup-card  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
   .danger-btn  { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--danger); border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--danger); transition: background 0.15s; margin-top: 10px; }
   .danger-btn:hover { background: var(--danger-bg); }
-  .notes-textarea { width: 100%; min-height: 120px; padding: 10px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; font-size: 0.9rem; resize: vertical; transition: border-color 0.15s; }
-  .notes-textarea:focus { outline: none; border-color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .char-list-item { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; }
+  .char-list-item.active { border-color: var(--accent); background: var(--accent-bg); }
+  .char-list-info { flex: 1; cursor: pointer; min-width: 0; }
+  .char-list-name { font-size: 0.9rem; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .char-list-meta { font-size: 0.75rem; color: var(--text2); }
+  .char-list-delete { background: transparent; border: none; color: var(--text3); font-size: 0.9rem; cursor: pointer; padding: 4px 6px; transition: color 0.15s; line-height: 1; flex-shrink: 0; }
+  .char-list-delete:hover { color: var(--danger); }
 
   /* ── TOAST ── */
   .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); border-radius: 99px; padding: 8px 20px; font-size: 0.85rem; font-weight: 600; z-index: 300; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; }
@@ -235,24 +241,41 @@
       <div class="setup-view">
         <div class="setup-card">
           <div class="section-title" x-text="T('char_info')"></div>
-          <div class="form-group">
-            <label class="form-label" x-text="T('char_name')"></label>
-            <input class="form-input" x-model="char.name" type="text" placeholder="Aragorn...">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" x-text="T('char_name')"></label>
+              <input class="form-input" x-model="char.name" type="text" placeholder="Aragorn...">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" x-text="T('char_class')"></label>
+              <input class="form-input" x-model="char.cls" type="text" placeholder="Ranger...">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" x-text="T('char_level_label')"></label>
-            <input class="form-input" x-model.number="char.level" type="number" min="1" max="99" placeholder="1">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" x-text="T('char_level_label')"></label>
+              <input class="form-input" x-model.number="char.level" type="number" min="1" max="99" placeholder="1">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" x-text="T('starting_xp')"></label>
+              <input class="form-input" x-model.number="char.startXp" type="number" placeholder="0" min="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" x-text="T('starting_xp')"></label>
-            <input class="form-input" x-model.number="char.startXp" type="number" placeholder="0" min="0">
-          </div>
-          <button class="submit-btn" @click="saveCharacter()" x-text="T('btn_save')"></button>
-          <button class="danger-btn" @click="confirmReset()" x-text="T('btn_reset')"></button>
+          <button class="submit-btn" style="margin-top:14px;" @click="saveCharacter()" x-text="T('btn_save')"></button>
         </div>
         <div class="setup-card">
-          <div class="section-title" x-text="T('notes_title')"></div>
-          <textarea class="notes-textarea" x-model="char.notes" @input="saveState()" placeholder="..."></textarea>
+          <div class="section-title" x-text="T('char_manager')"></div>
+          <button class="submit-btn" style="margin-bottom:12px;" @click="createCharacter()" x-text="T('btn_new_char')"></button>
+          <div x-show="characters.length === 0" style="text-align:center;padding:20px 0;color:var(--text3);font-size:0.88rem;" x-text="T('no_characters')"></div>
+          <template x-for="c in characters" :key="c.id">
+            <div class="char-list-item" :class="{ active: c.id === activeCharId }">
+              <div class="char-list-info" @click="switchCharacter(c.id)">
+                <span class="char-list-name" x-text="c.name || '&mdash;'"></span>
+                <span class="char-list-meta" x-text="(c.cls ? c.cls + ' · ' : '') + T('char_level') + ' ' + (c.level || 1)"></span>
+              </div>
+              <button class="char-list-delete" @click="deleteCharacter(c.id)" title="Delete">&#10005;</button>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -647,10 +670,13 @@ const STRINGS = {
     cat_maneuver:'Maneuver', cat_save:'Saving Throw', cat_crit_done:'Crit Done',
     cat_crit_recv:'Crit Received', cat_kill:'Kill', cat_spell:'Spell',
     choose_action:'Choose Action',
-    char_info:'Character', char_name:'Name', char_level_label:'Level',
+    char_info:'Character', char_name:'Name', char_class:'Class', char_level_label:'Level',
     starting_xp:'Starting XP',
     btn_save:'Save', btn_reset:'Reset All Data', btn_log_xp:'\u26a1 Log XP',
-    notes_title:'Notes',
+    btn_new_char:'+ New Character',
+    char_manager:'Characters',
+    no_characters:'No characters yet.',
+    delete_char_confirm:'Delete "{name}"? This cannot be undone.',
     filter_all:'All',
     modal_maneuver:'Log Maneuver', modal_save:'Log Saving Throw',
     modal_crit_done:'Log Critical Delivered', modal_crit_recv:'Log Critical Received',
@@ -692,10 +718,13 @@ const STRINGS = {
     cat_maneuver:'Manovra', cat_save:'Tiro Salvezza', cat_crit_done:'Critico Fatto',
     cat_crit_recv:'Critico Subito', cat_kill:'Uccisione', cat_spell:'Magia',
     choose_action:'Scegli Azione',
-    char_info:'Personaggio', char_name:'Nome', char_level_label:'Livello',
+    char_info:'Personaggio', char_name:'Nome', char_class:'Classe', char_level_label:'Livello',
     starting_xp:'XP Iniziali',
     btn_save:'Salva', btn_reset:'Cancella Tutto', btn_log_xp:'\u26a1 Registra XP',
-    notes_title:'Note',
+    btn_new_char:'+ Nuovo Personaggio',
+    char_manager:'Personaggi',
+    no_characters:'Nessun personaggio ancora.',
+    delete_char_confirm:'Eliminare "{name}"? Non si può annullare.',
     filter_all:'Tutti',
     modal_maneuver:'Registra Manovra', modal_save:'Registra Tiro Salvezza',
     modal_crit_done:'Registra Critico Fatto', modal_crit_recv:'Registra Critico Subito',
@@ -740,7 +769,9 @@ function app() {
   return {
     lang: localStorage.getItem('cb_lang') || 'en',
     view: 'setup',
-    char: { name:'', level:1, startXp:0, notes:'', log:[] },
+    characters: [],
+    activeCharId: null,
+    char: { id: null, name:'', cls:'', level:1, startXp:0, log:[] },
     modal: {
       open:false, type:null,
       diff:'Medium', risk:'Some',
@@ -780,14 +811,36 @@ function app() {
     killLevels: [0,1,2,3,4,5,6,7,8,9,'10+'],
 
     init() {
-      let saved = null;
-      try { const s = localStorage.getItem('cb_state'); saved = s ? JSON.parse(s) : null; } catch(e) {}
-      if (saved) {
-        // migrate legacy key
-        if (saved.startCp !== undefined && saved.startXp === undefined) {
-          saved.startXp = saved.startCp; delete saved.startCp;
-        }
-        this.char = { name:'', level:1, startXp:0, notes:'', log:[], ...saved };
+      let chars = null;
+      let activeId = null;
+      try {
+        const s = localStorage.getItem('cb_chars');
+        chars = s ? JSON.parse(s) : null;
+        activeId = parseInt(localStorage.getItem('cb_active_char')) || null;
+      } catch(e) {}
+
+      // Migrate from old single-character format
+      if (!chars) {
+        try {
+          const s = localStorage.getItem('cb_state');
+          const old = s ? JSON.parse(s) : null;
+          if (old) {
+            if (old.startCp !== undefined && old.startXp === undefined) {
+              old.startXp = old.startCp; delete old.startCp;
+            }
+            old.id = Date.now();
+            chars = [old];
+            activeId = old.id;
+            localStorage.removeItem('cb_state');
+          }
+        } catch(e) {}
+      }
+
+      if (chars && chars.length > 0) {
+        this.characters = chars;
+        const active = chars.find(c => c.id === activeId) || chars[0];
+        this.activeCharId = active.id;
+        this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...active };
       }
       if (this.char.name) this.view = 'dashboard';
       this.consentGiven = document.cookie.split(';').some(c => c.trim().startsWith('cb_consent=1'));
@@ -811,22 +864,65 @@ function app() {
     },
 
     saveState() {
-      try { localStorage.setItem('cb_state', JSON.stringify(this.char)); } catch(e) {}
+      if (this.activeCharId) {
+        const idx = this.characters.findIndex(c => c.id === this.activeCharId);
+        if (idx >= 0) this.characters.splice(idx, 1, { ...this.char });
+      }
+      try { localStorage.setItem('cb_chars', JSON.stringify(this.characters)); } catch(e) {}
+      if (this.activeCharId) {
+        try { localStorage.setItem('cb_active_char', String(this.activeCharId)); } catch(e) {}
+      }
     },
 
     saveCharacter() {
       this.char.level   = parseInt(this.char.level)   || 1;
       this.char.startXp = parseInt(this.char.startXp) || 0;
+      if (!this.char.id) {
+        this.char.id = Date.now();
+        this.activeCharId = this.char.id;
+        this.characters.push({ ...this.char });
+      }
       this.saveState();
       this.showToast(this.T('setup_saved'));
+      if (this.char.name) this.view = 'dashboard';
     },
 
-    confirmReset() {
-      if (confirm(this.T('reset_confirm'))) {
-        this.char = { name:'', level:1, startXp:0, notes:'', log:[] };
-        this.saveState();
-        this.view = 'setup';
-        this.showToast('\u2713');
+    createCharacter() {
+      if (this.activeCharId) this.saveState();
+      this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[] };
+      this.activeCharId = null;
+    },
+
+    switchCharacter(id) {
+      if (id === this.activeCharId) return;
+      this.saveState();
+      const c = this.characters.find(ch => ch.id === id);
+      if (!c) return;
+      this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...c };
+      this.activeCharId = id;
+      try { localStorage.setItem('cb_active_char', String(id)); } catch(e) {}
+      if (this.char.name) this.view = 'dashboard';
+    },
+
+    deleteCharacter(id) {
+      const c = this.characters.find(ch => ch.id === id);
+      const name = c ? (c.name || '\u2014') : '\u2014';
+      if (!confirm(this.T('delete_char_confirm').replace('{name}', name))) return;
+      this.characters = this.characters.filter(ch => ch.id !== id);
+      try { localStorage.setItem('cb_chars', JSON.stringify(this.characters)); } catch(e) {}
+      if (id === this.activeCharId) {
+        if (this.characters.length > 0) {
+          const next = this.characters[0];
+          this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...next };
+          this.activeCharId = next.id;
+          try { localStorage.setItem('cb_active_char', String(next.id)); } catch(e) {}
+          if (this.char.name) this.view = 'dashboard';
+        } else {
+          this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[] };
+          this.activeCharId = null;
+          localStorage.removeItem('cb_active_char');
+          this.view = 'setup';
+        }
       }
     },
 
