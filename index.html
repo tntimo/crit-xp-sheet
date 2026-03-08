@@ -273,7 +273,7 @@
           <div class="form-group">
             <label class="form-label" x-text="T('lbl_crit_grade')"></label>
             <div style="display:flex;gap:5px;">
-              <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+              <template x-for="g in ['A','B','C','D','E']" :key="g">
                 <button class="opt-btn" style="flex:1;" :class="{ selected: modal.grade === g }" @click="modal.grade = g" x-text="g"></button>
               </template>
             </div>
@@ -304,7 +304,7 @@
             <label class="form-label" x-text="T('lbl_crit_grade')"></label>
             <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
             <div style="display:flex;gap:5px;">
-              <template x-for="g in ['A','B','C','D','E','F']" :key="g">
+              <template x-for="g in ['A','B','C','D','E']" :key="g">
                 <button class="opt-btn" style="flex:1;" :class="{ selected: modal.gradeRecv === g }" @click="modal.gradeRecv = g" x-text="g"></button>
               </template>
             </div>

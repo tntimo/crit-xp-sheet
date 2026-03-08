@@ -24,19 +24,19 @@ function getKillXP(oppLevel, charLevel) {
 }
 
 const CRIT_DONE_BASE = [
-  {A:3,  B:5,   C:8,   D:10,  E:13,  F:16},
-  {A:5,  B:10,  C:15,  D:20,  E:25,  F:30},
-  {A:10, B:20,  C:30,  D:40,  E:50,  F:60},
-  {A:15, B:30,  C:45,  D:60,  E:75,  F:90},
-  {A:20, B:40,  C:60,  D:80,  E:100, F:120},
-  {A:25, B:50,  C:75,  D:100, E:125, F:150},
-  {A:30, B:60,  C:90,  D:120, E:150, F:180},
-  {A:35, B:70,  C:105, D:140, E:175, F:210},
-  {A:40, B:80,  C:120, D:160, E:200, F:240},
-  {A:45, B:90,  C:135, D:180, E:225, F:270},
-  {A:50, B:100, C:150, D:200, E:250, F:300},
+  {A:3,  B:5,   C:8,   D:10,  E:13},
+  {A:5,  B:10,  C:15,  D:20,  E:25},
+  {A:10, B:20,  C:30,  D:40,  E:50},
+  {A:15, B:30,  C:45,  D:60,  E:75},
+  {A:20, B:40,  C:60,  D:80,  E:100},
+  {A:25, B:50,  C:75,  D:100, E:125},
+  {A:30, B:60,  C:90,  D:120, E:150},
+  {A:35, B:70,  C:105, D:140, E:175},
+  {A:40, B:80,  C:120, D:160, E:200},
+  {A:45, B:90,  C:135, D:180, E:225},
+  {A:50, B:100, C:150, D:200, E:250},
 ];
-const CRIT_DONE_STEP = {A:5,B:10,C:15,D:20,E:25,F:30};
+const CRIT_DONE_STEP = {A:5,B:10,C:15,D:20,E:25};
 function getCritDoneXP(oppLevel, grade) {
   const ol   = parseInt(oppLevel) || 0;
   const row  = CRIT_DONE_BASE[Math.min(ol, 10)];
@@ -45,7 +45,7 @@ function getCritDoneXP(oppLevel, grade) {
   return base + extra;
 }
 
-const CRIT_RECV_TABLE = {A:100,B:200,C:300,D:400,E:500,F:600};
+const CRIT_RECV_TABLE = {A:100,B:200,C:300,D:400,E:500};
 
 const SPELL_TABLE = [
   [100,90,80,70,60,50,40,30,20,10],
