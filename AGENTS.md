@@ -18,7 +18,7 @@ Alpine.js v3 is loaded from CDN (`defer`). The single `app()` factory function i
 | `cb_chars` | JSON array of character objects | Current multi-character format |
 | `cb_active_char` | character `id` (number as string) | Which character is active |
 | `cb_lang` | `'en'` or `'it'` | Language preference |
-| `cb_consent` | cookie `cb_consent=1` | Set as an actual cookie, not localStorage |
+| `cb_consent` | `'1'` | Whether the user has acknowledged the privacy notice |
 
 **Legacy key:** `cb_state` (single-character JSON object) — migrated to `cb_chars` on first load, then deleted.
 

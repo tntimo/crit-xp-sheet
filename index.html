@@ -184,14 +184,7 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* ── COOKIE BANNER ── */
-  .cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; z-index: 500; font-size: 0.82rem; color: var(--text2); flex-wrap: wrap; }
-  .cookie-banner-text { flex: 1; min-width: 200px; }
-  .cookie-banner-text a { color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font: inherit; font-size: inherit; padding: 0; }
-  .cookie-banner-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-  .cookie-banner-btn:hover { opacity: 0.88; }
-
-  /* ── PRIVACY MODAL ── */
+  /* ── CONSENT & PRIVACY ── */
   .privacy-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 600; display: flex; align-items: flex-end; justify-content: center; }
   .privacy-sheet { background: var(--bg); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px 32px; max-width: 520px; width: 100%; max-height: 80vh; overflow-y: auto; }
   .privacy-sheet h2 { font-size: 1rem; font-weight: 700; margin: 0 0 14px; }
@@ -201,6 +194,12 @@
   .privacy-sheet p.privacy-footer { font-size: 0.78rem; color: var(--text3); margin: 0 0 16px; }
   .privacy-close-btn { width: 100%; padding: 10px; background: var(--bg3); border: none; border-radius: 8px; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); cursor: pointer; }
   .privacy-close-btn:hover { background: var(--border); }
+
+  /* ── APP FOOTER ── */
+  .app-footer { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .footer-link { background: none; border: none; font: inherit; font-size: 0.72rem; color: var(--text3); cursor: pointer; padding: 0; text-decoration: none; }
+  .footer-link:hover { color: var(--accent); text-decoration: underline; }
+  .footer-sep { color: var(--border); font-size: 0.72rem; }
 </style>
 </head>
 <body x-data="app()" x-init="init()">
@@ -378,6 +377,13 @@
       </div>
     </div>
   </main>
+  <footer class="app-footer">
+    <button class="footer-link" @click="privacyOpen = true" x-text="T('privacy_title')"></button>
+    <span class="footer-sep">·</span>
+    <a class="footer-link" href="https://github.com/tntimo/crit-xp-sheet" target="_blank" rel="noopener">GitHub</a>
+    <span class="footer-sep">·</span>
+    <a class="footer-link" href="LICENSE" target="_blank">© 2026 CC BY-NC 4.0</a>
+  </footer>
 </div>
 
 <!-- MODAL -->
@@ -568,13 +574,22 @@
 
 <div class="toast" :class="{ show: toastShow }" x-text="toastMsg"></div>
 
-<!-- COOKIE BANNER -->
-<div class="cookie-banner" x-show="!consentGiven" x-cloak>
-  <span class="cookie-banner-text" x-html="T('cookie_notice')"></span>
-  <button class="cookie-banner-btn" @click="acceptConsent()" x-text="T('cookie_ok')"></button>
+<!-- CONSENT (must read before dismissing) -->
+<div class="privacy-overlay" x-show="!consentGiven" x-cloak>
+  <div class="privacy-sheet">
+    <h2 x-text="T('privacy_title')"></h2>
+    <ul>
+      <li x-html="T('privacy_p1')"></li>
+      <li x-html="T('privacy_p2')"></li>
+      <li x-html="T('privacy_p3')"></li>
+      <li x-html="T('privacy_p4')"></li>
+    </ul>
+    <p class="privacy-footer" x-text="T('privacy_footer')"></p>
+    <button class="submit-btn" @click="acceptConsent()" x-text="T('cookie_ok')"></button>
+  </div>
 </div>
 
-<!-- PRIVACY POLICY MODAL -->
+<!-- PRIVACY POLICY MODAL (footer link) -->
 <div class="privacy-overlay" x-show="privacyOpen" x-cloak @click.self="privacyOpen = false">
   <div class="privacy-sheet">
     <h2 x-text="T('privacy_title')"></h2>
@@ -702,13 +717,12 @@ const STRINGS = {
     desc_critd_opp:'vs opp', desc_critr_grade:'Crit recv grade',
     desc_kill:'Kill opp', desc_kill_you:'your level',
     desc_spell:'Spell', desc_spell_caster:'caster',
-    cookie_notice:'This app uses one technical cookie — just to remember that you\'ve read this notice. <button onclick="document.dispatchEvent(new CustomEvent(\'open-privacy\'))" style="color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:none;font:inherit;font-size:inherit;padding:0;">Privacy policy.</button>',
     cookie_ok:'Got it',
     privacy_title:'Privacy Policy',
     privacy_p1:'<strong>Everything stays in your browser.</strong> All your data — character info, XP logs, notes — is stored exclusively in your browser\'s local storage. It never leaves your device.',
     privacy_p2:'<strong>We collect nothing.</strong> No analytics, no tracking, no telemetry, no external services of any kind.',
     privacy_p3:'<strong>No server, no account.</strong> This is a static page. There is no backend. Nobody receives your data because there is nobody to receive it.',
-    privacy_p4:'<strong>One technical cookie.</strong> The only cookie this app sets is to record that you\'ve dismissed this notice. It contains no personal information.',
+    privacy_p4:'<strong>No cookies.</strong> This app sets no cookies of any kind. Consent is stored in local storage, exactly like everything else.',
     privacy_footer:'That\'s it. Genuinely.',
     privacy_close:'Close',
   },
@@ -750,13 +764,12 @@ const STRINGS = {
     desc_critd_opp:'vs avv', desc_critr_grade:'Critico subito grado',
     desc_kill:'Uccisione avv', desc_kill_you:'tuo livello',
     desc_spell:'Magia', desc_spell_caster:'incantatore',
-    cookie_notice:'Questa app usa un solo cookie tecnico — solo per ricordare che hai letto questo avviso. <button onclick="document.dispatchEvent(new CustomEvent(\'open-privacy\'))" style="color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:none;font:inherit;font-size:inherit;padding:0;">Informativa sulla privacy.</button>',
     cookie_ok:'Capito',
     privacy_title:'Informativa sulla Privacy',
     privacy_p1:'<strong>Tutto rimane nel tuo browser.</strong> Tutti i tuoi dati — personaggio, log XP, note — sono salvati esclusivamente nel localStorage del browser. Non lasciano mai il tuo dispositivo.',
     privacy_p2:'<strong>Non raccogliamo nulla.</strong> Niente analisi, niente tracciamento, niente telemetria, nessun servizio esterno di alcun tipo.',
     privacy_p3:'<strong>Nessun server, nessun account.</strong> Questa è una pagina statica. Non c\'è un backend. Nessuno riceve i tuoi dati perché non c\'è nessuno a riceverli.',
-    privacy_p4:'<strong>Un solo cookie tecnico.</strong> L\'unico cookie impostato da questa app serve solo a registrare che hai chiuso questo avviso. Non contiene dati personali.',
+    privacy_p4:'<strong>Nessun cookie.</strong> Questa app non imposta alcun cookie. Il consenso viene salvato nel localStorage, esattamente come tutto il resto.',
     privacy_footer:'Tutto qui. Davvero.',
     privacy_close:'Chiudi',
   }
@@ -843,14 +856,11 @@ function app() {
         this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...active };
       }
       if (this.char.name) this.view = 'dashboard';
-      this.consentGiven = document.cookie.split(';').some(c => c.trim().startsWith('cb_consent=1'));
-      document.addEventListener('open-privacy', () => { this.privacyOpen = true; });
+      this.consentGiven = localStorage.getItem('cb_consent') === '1';
     },
 
     acceptConsent() {
-      const d = new Date();
-      d.setFullYear(d.getFullYear() + 1);
-      document.cookie = 'cb_consent=1; path=/; expires=' + d.toUTCString() + '; SameSite=Lax';
+      localStorage.setItem('cb_consent', '1');
       this.consentGiven = true;
     },
 
