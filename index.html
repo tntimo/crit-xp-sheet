@@ -214,7 +214,7 @@
       </button>
     </div>
     <div class="char-strip">
-      <span class="char-name" x-text="char.name || '&mdash;'"></span>
+      <span class="char-name" x-text="char.name ? char.name + (char.cls ? ' · ' + char.cls : '') : '&mdash;'"></span>
       <span class="char-level" x-text="char.name ? T('char_level') + ' ' + char.level : ''"></span>
     </div>
   </header>
