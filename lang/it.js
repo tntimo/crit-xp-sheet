@@ -44,7 +44,7 @@ const LANG_IT = {
   privacy_p1:'<strong>Tutto rimane nel tuo browser.</strong> Tutti i tuoi dati — personaggio, log XP, note — sono salvati esclusivamente nel localStorage del browser. Non lasciano mai il tuo dispositivo.',
   privacy_p2:'<strong>Non raccogliamo nulla.</strong> Niente analisi, niente tracciamento, niente telemetria, nessun servizio esterno di alcun tipo.',
   privacy_p3:'<strong>Nessun server, nessun account.</strong> Questa è una pagina statica. Non c\'è un backend. Nessuno riceve i tuoi dati perché non c\'è nessuno a riceverli.',
-  privacy_p4:'<strong>Nessun cookie.</strong> Questa app non imposta alcun cookie. Il consenso viene salvato nel localStorage, esattamente come tutto il resto.',
+  privacy_p4:'<strong>Nessun cookie di tracciamento.</strong> Questa app non imposta alcun cookie proprio. Il consenso viene salvato nel localStorage, esattamente come tutto il resto. La pagina è ospitata su GitHub Pages, che potrebbe impostare cookie tecnici strettamente necessari al di fuori del nostro controllo.',
   privacy_footer:'Tutto qui. Davvero.',
   privacy_close:'Chiudi',
 };

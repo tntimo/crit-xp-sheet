@@ -44,7 +44,7 @@ const LANG_EN = {
   privacy_p1:'<strong>Everything stays in your browser.</strong> All your data — character info, XP logs, notes — is stored exclusively in your browser\'s local storage. It never leaves your device.',
   privacy_p2:'<strong>We collect nothing.</strong> No analytics, no tracking, no telemetry, no external services of any kind.',
   privacy_p3:'<strong>No server, no account.</strong> This is a static page. There is no backend. Nobody receives your data because there is nobody to receive it.',
-  privacy_p4:'<strong>No cookies.</strong> This app sets no cookies of any kind. Consent is stored in local storage, exactly like everything else.',
+  privacy_p4:'<strong>No tracking cookies.</strong> This app sets no cookies of its own. Consent is stored in local storage, exactly like everything else. This page is hosted on GitHub Pages, which may set strictly necessary technical cookies outside our control.',
   privacy_footer:'That\'s it. Genuinely.',
   privacy_close:'Close',
 };

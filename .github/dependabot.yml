@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: quarterly
+    commit-message:
+      prefix: "chore:"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: quarterly
+    commit-message:
+      prefix: "chore:"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
