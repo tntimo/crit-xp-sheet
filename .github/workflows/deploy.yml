@@ -40,7 +40,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir dist
-          cp index.html app.js style.css manifest.json dist/
+          cp index.html app.js style.css manifest.json LICENSE dist/
           cp apple-touch-icon.png icon-192.png icon-512.png icon-1024.jpg dist/
           cp -r lang dist/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
