@@ -151,7 +151,7 @@ Level is **not derived from XP**. There are no XP thresholds. The user sets thei
 
 ## I18N
 
-Two languages: `en` and `it`. All strings live in the `STRINGS` object.
+Two languages: `en` and `it`. **Always write literal Unicode characters** (e.g. `à`, `è`, `⭐`) in language files — never `\uXXXX` or `\xNN` escapes, which make the files hard to review and edit manually. All strings live in the `STRINGS` object.
 
 Journal entries store a `descData` object (not a plain string) so they can be re-rendered in the current language at any time. `renderDesc(descData)` turns it into a localised string. Always add new description fields to `renderDesc` and both language string tables.
 
