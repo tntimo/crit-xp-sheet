@@ -193,10 +193,8 @@ function app() {
 
     T(k) { return (STRINGS[this.lang] || STRINGS.en)[k] || k; },
 
-    get langFlag() { return { en:'🇬🇧', it:'🇮🇹' }[this.lang]; },
-
-    toggleLang() {
-      this.lang = this.lang === 'en' ? 'it' : 'en';
+    setLang(code) {
+      this.lang = STRINGS[code] ? code : 'en';
       localStorage.setItem('cb_lang', this.lang);
     },
 

@@ -102,7 +102,7 @@ body { font-family: var(--font); font-size: 18px; background: var(--bg); color: 
 header { background: var(--bg); border-bottom: 2px solid var(--border); padding: 10px 14px 8px; position: sticky; top: 0; z-index: 100; }
 .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 header h1 { font-size: 1rem; font-weight: 800; }
-.lang-btn { background: transparent; border: 2px solid var(--border); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 700; padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.1s, color 0.1s; }
+.lang-btn { background: transparent; border: 2px solid var(--border); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 700; padding: 5px 10px; cursor: pointer; transition: background 0.1s, color 0.1s; }
 .lang-btn:hover { background: var(--border); color: var(--bg); }
 .char-strip { display: flex; align-items: baseline; gap: 8px; }
 .char-name  { font-size: 1rem; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.char-xp    { font-size: 0.9rem; font-weight: 800; white-space: nowrap; margin-left: auto; display: flex; gap: 4px; align-items: baseline; }

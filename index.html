@@ -22,10 +22,10 @@
       <h1>&#9876; Critical Based &middot; XP Sheet</h1>
       <div style="display:flex;gap:6px;">
         <button class="lang-btn" @click="cycleTheme()" x-text="themeIcon" title="Toggle theme"></button>
-        <button class="lang-btn" @click="toggleLang()">
-          <span x-text="langFlag"></span>
-          <span x-text="lang.toUpperCase()"></span>
-        </button>
+        <select class="lang-btn" @change="setLang($event.target.value)" :value="lang">
+          <option value="en">EN</option>
+          <option value="it">IT</option>
+        </select>
       </div>
     </div>
     <div class="char-strip">
