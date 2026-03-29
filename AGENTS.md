@@ -19,6 +19,7 @@ Alpine.js v3 is loaded from CDN (`defer`). The single `app()` factory function i
 | `cb_active_char` | character `id` (number as string) | Which character is active |
 | `cb_lang` | `'en'` or `'it'` | Language preference |
 | `cb_consent` | `'1'` | Whether the user has acknowledged the privacy notice |
+| `cb_theme` | `'auto'` \| `'light'` \| `'dark'` | Manual theme override; defaults to `'auto'` (follows OS) |
 
 **Legacy key:** `cb_state` (single-character JSON object) — migrated to `cb_chars` on first load, then deleted.
 
@@ -183,6 +184,18 @@ All colours are CSS custom properties, set in `:root` with a `@media (prefers-co
 Key tokens: `--bg` `--bg2` `--bg3` `--border` `--text` `--text2` `--text3` `--accent` `--accent-bg` `--danger` `--warn` `--warn-bg`
 
 Category colours: `--c-maneuver` `--c-save` `--c-critd` `--c-critr` `--c-kill` `--c-spell` `--c-levelup`
+
+---
+
+## Accessibility — WCAG 2.2 AA
+
+This app targets WCAG 2.2 Level AA. Enforce the following at all times:
+
+- **Font sizes** — base is `18px`. Minimums: `0.75rem` (13.5px) for pure metadata (timestamps); `0.8rem` (14.4px) for secondary labels; `0.875rem` (15.75px) for body/interactive text. Never go below `0.75rem` anywhere.
+- **Contrast** — `--text` on `--bg` and `--border` on `--bg` must meet 4.5:1 for normal text, 3:1 for large text (≥ 18px regular or ≥ 14px bold). `--text2` on `--bg` must also meet 4.5:1. Check both light and dark themes when changing colours.
+- **Touch targets** — interactive elements must be at least 44×44px effective tap area (WCAG 2.5.5). Use padding to meet this even if the visual element is smaller.
+- **Focus** — do not suppress `:focus-visible` outlines. If the default browser outline is removed, replace it with a visible custom style.
+- **No colour-only cues** — category differentiation must not rely on colour alone (labels/text provide the same information).
 
 ---
 

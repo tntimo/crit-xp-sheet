@@ -76,9 +76,19 @@ const STRINGS = { en: LANG_EN, it: LANG_IT };
 // ═══════════════════════════════════════════
 // ALPINE COMPONENT
 // ═══════════════════════════════════════════
+const CAT_ICON_MAP = {
+  maneuver:   '\u{1F938}',
+  save:       '\u{1F6E1}\uFE0F',
+  'crit-done':'\u{1F3AF}',
+  'crit-recv':'\u{1FA78}',
+  kill:       '\u{1F480}',
+  spell:      '\u2728',
+  levelup:    '\u2B50',
+};
 function app() {
   return {
     lang: localStorage.getItem('cb_lang') || 'en',
+    theme: localStorage.getItem('cb_theme') || 'auto',
     view: 'setup',
     characters: [],
     activeCharId: null,
@@ -92,6 +102,7 @@ function app() {
       killOpp:'1',
       spellLvl:1, casterLvl:1,
       note:'',
+      editId: null,
     },
     filter: 'all',
     toastShow: false,
@@ -153,8 +164,26 @@ function app() {
         this.activeCharId = active.id;
         this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...active };
       }
-      if (this.char.name) this.view = 'dashboard';
+      if (this.char.name) this.view = 'log';
       this.consentGiven = localStorage.getItem('cb_consent') === '1';
+      this._applyTheme();
+    },
+
+    _applyTheme() {
+      const el = document.documentElement;
+      if (this.theme === 'auto') el.removeAttribute('data-theme');
+      else el.setAttribute('data-theme', this.theme);
+    },
+
+    cycleTheme() {
+      const order = ['auto', 'light', 'dark'];
+      this.theme = order[(order.indexOf(this.theme) + 1) % order.length];
+      localStorage.setItem('cb_theme', this.theme);
+      this._applyTheme();
+    },
+
+    get themeIcon() {
+      return { auto: '🌗', light: '☀️', dark: '🌙' }[this.theme];
     },
 
     acceptConsent() {
@@ -172,7 +201,11 @@ function app() {
     },
 
     saveState() {
-      if (this.activeCharId) {
+      if (!this.char.id) {
+        this.char.id = Date.now();
+        this.activeCharId = this.char.id;
+        this.characters.push({ ...this.char });
+      } else if (this.activeCharId) {
         const idx = this.characters.findIndex(c => c.id === this.activeCharId);
         if (idx >= 0) this.characters.splice(idx, 1, { ...this.char });
       }
@@ -191,8 +224,7 @@ function app() {
         this.characters.push({ ...this.char });
       }
       this.saveState();
-      this.showToast(this.T('setup_saved'));
-      if (this.char.name) this.view = 'dashboard';
+      if (this.char.name) this.view = 'log';
     },
 
     createCharacter() {
@@ -209,7 +241,7 @@ function app() {
       this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...c };
       this.activeCharId = id;
       try { localStorage.setItem('cb_active_char', String(id)); } catch(e) {}
-      if (this.char.name) this.view = 'dashboard';
+      if (this.char.name) this.view = 'log';
     },
 
     deleteCharacter(id) {
@@ -224,12 +256,12 @@ function app() {
           this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...next };
           this.activeCharId = next.id;
           try { localStorage.setItem('cb_active_char', String(next.id)); } catch(e) {}
-          if (this.char.name) this.view = 'dashboard';
+          if (this.char.name) this.view = 'log';
         } else {
           this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[] };
           this.activeCharId = null;
           localStorage.removeItem('cb_active_char');
-          this.view = 'setup';
+          this.view = 'log';
         }
       }
     },
@@ -246,6 +278,7 @@ function app() {
     openModal(type) {
       this.modal.type = type;
       this.modal.note = '';
+      this.modal.editId = null;
       if (type === 'spell') this.modal.casterLvl = this.char.level;
       this.modal.open = true;
       document.body.style.overflow = 'hidden';
@@ -253,7 +286,23 @@ function app() {
 
     closeModal() {
       this.modal.open = false;
+      this.modal.editId = null;
       document.body.style.overflow = '';
+    },
+
+    editEntry(entry) {
+      const d = entry.descData || {};
+      this.modal.type = d.type;
+      this.modal.note = entry.note || '';
+      this.modal.editId = entry.id;
+      if (d.type === 'maneuver')  { this.modal.diff = d.diff; this.modal.risk = d.risk; }
+      if (d.type === 'save')      { this.modal.saveScore = d.score; }
+      if (d.type === 'crit-done') { this.modal.grade = d.grade; this.modal.oppLevel = d.opp; }
+      if (d.type === 'crit-recv') { this.modal.gradeRecv = d.grade; }
+      if (d.type === 'kill')      { this.modal.killOpp = d.opp; }
+      if (d.type === 'spell')     { this.modal.spellLvl = d.spell; this.modal.casterLvl = d.caster; }
+      this.modal.open = true;
+      document.body.style.overflow = 'hidden';
     },
 
     calcXP() {
@@ -324,26 +373,59 @@ function app() {
     confirmXP() {
       const xp = this.xpPreview;
       if (xp === null) return;
-      this.char.log.push({
-        id: Date.now(),
-        cat: this.modal.type,
-        xp,
-        descData: this.buildDescData(),
-        note: this.modal.note || '',
-        ts: new Date().toISOString(),
-      });
+      if (this.modal.editId) {
+        const idx = this.char.log.findIndex(e => e.id === this.modal.editId);
+        if (idx >= 0) {
+          this.char.log.splice(idx, 1, { ...this.char.log[idx], xp, descData: this.buildDescData(), note: this.modal.note || '' });
+        }
+      } else {
+        this.char.log.push({ id: Date.now(), cat: this.modal.type, xp, descData: this.buildDescData(), note: this.modal.note || '', ts: new Date().toISOString() });
+      }
       this.saveState();
       this.closeModal();
-      this.showToast(`${xp} XP`);
     },
 
     deleteEntry(id) {
+      const entry = this.char.log.find(e => e.id === id);
+      const desc = entry ? this.renderDesc(entry.descData) : '';
+      if (!confirm(this.T('delete_entry_confirm').replace('{desc}', desc))) return;
       this.char.log = this.char.log.filter(e => e.id !== id);
       this.saveState();
     },
 
-    get filteredLog() {
-      return [...this.char.log].reverse().filter(e => this.filter === 'all' || e.cat === this.filter);
+    get groupedLog() {
+      const entries = [...this.char.log].reverse();
+      const groups = [];
+      let current = null;
+      for (const e of entries) {
+        const day = e.ts ? e.ts.slice(0, 10) : '';
+        if (!current || current.date !== day) {
+          current = { date: day, entries: [] };
+          groups.push(current);
+        }
+        current.entries.push(e);
+      }
+      return groups;
+    },
+
+    getLocale() {
+      return this.lang === 'it' ? 'it-IT' : 'en-GB';
+    },
+
+    entryTimeOnly(entry) {
+      if (!entry.ts) return '';
+      try { return new Date(entry.ts).toLocaleTimeString(this.getLocale(), { hour:'2-digit', minute:'2-digit' }); }
+      catch(e) { return ''; }
+    },
+
+    formatDay(dateStr) {
+      if (!dateStr) return '';
+      try { return new Date(dateStr).toLocaleDateString(this.getLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+      catch(e) { return dateStr; }
+    },
+
+    catIcon(cat) {
+      return CAT_ICON_MAP[cat] || '\u2022';
     },
 
     catLabel(cat) {
@@ -363,12 +445,6 @@ function app() {
       return String(parseInt(e.xp) || 0);
     },
 
-    entryTime(e) {
-      return new Date(e.ts).toLocaleString(
-        this.lang === 'it' ? 'it-IT' : 'en-GB',
-        { dateStyle:'short', timeStyle:'short' }
-      );
-    },
 
     showToast(msg) {
       this.toastMsg  = msg;

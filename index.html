@@ -20,14 +20,17 @@
   <header>
     <div class="header-top">
       <h1>&#9876; Critical Based &middot; XP Sheet</h1>
-      <button class="lang-btn" @click="toggleLang()">
-        <span x-text="langFlag"></span>
-        <span x-text="lang.toUpperCase()"></span>
-      </button>
+      <div style="display:flex;gap:6px;">
+        <button class="lang-btn" @click="cycleTheme()" x-text="themeIcon" title="Toggle theme"></button>
+        <button class="lang-btn" @click="toggleLang()">
+          <span x-text="langFlag"></span>
+          <span x-text="lang.toUpperCase()"></span>
+        </button>
+      </div>
     </div>
     <div class="char-strip">
-      <span class="char-name" x-text="char.name ? char.name + (char.cls ? ' · ' + char.cls : '') : '&mdash;'"></span>
-      <span class="char-level" x-text="char.name ? T('char_level') + ' ' + char.level : ''"></span>
+      <span class="char-name" x-text="char.name ? char.name + (char.cls ? ' · ' + char.cls : '') + ' · ' + T('char_level') + ' ' + char.level : '&mdash;'"></span>
+      <span class="char-xp" x-show="char.name"><span class="char-xp-label" x-text="T('current_xp')"></span> <span x-text="totalXP"></span></span>
     </div>
   </header>
 
@@ -35,14 +38,8 @@
     <button @click="view = 'setup'" :class="{ active: view === 'setup' }">
       <span class="nav-icon">&#129497;</span><span x-text="T('nav_setup')"></span>
     </button>
-    <button @click="view = 'dashboard'" :class="{ active: view === 'dashboard' }">
-      <span class="nav-icon">&#129518;</span><span x-text="T('nav_dash')"></span>
-    </button>
     <button @click="view = 'log'" :class="{ active: view === 'log' }">
       <span class="nav-icon">&#9999;&#65039;</span><span x-text="T('nav_log')"></span>
-    </button>
-    <button @click="view = 'journal'" :class="{ active: view === 'journal' }">
-      <span class="nav-icon">&#128220;</span><span x-text="T('nav_journal')"></span>
     </button>
   </nav>
 
@@ -62,7 +59,7 @@
               <input class="form-input" x-model="char.cls" type="text" placeholder="Ranger...">
             </div>
           </div>
-          <div class="form-row">
+          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
             <div class="form-group" style="margin-bottom:0;">
               <label class="form-label" x-text="T('char_level_label')"></label>
               <input class="form-input" x-model.number="char.level" type="number" min="1" max="99" placeholder="1">
@@ -71,10 +68,14 @@
               <label class="form-label" x-text="T('starting_xp')"></label>
               <input class="form-input" x-model.number="char.startXp" type="number" placeholder="0" min="0">
             </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" x-text="T('current_xp')"></label>
+              <input class="form-input" :value="totalXP" type="number" readonly style="color:var(--text2);cursor:default;">
+            </div>
           </div>
           <button class="submit-btn" style="margin-top:14px;" @click="saveCharacter()" x-text="T('btn_save')"></button>
         </div>
-        <div class="setup-card">
+        <div class="setup-card-scroll"><div class="setup-card">
           <div class="section-title" x-text="T('char_manager')"></div>
           <button class="submit-btn" style="margin-bottom:12px;" @click="createCharacter()" x-text="T('btn_new_char')"></button>
           <div x-show="characters.length === 0" style="text-align:center;padding:20px 0;color:var(--text3);font-size:0.88rem;" x-text="T('no_characters')"></div>
@@ -87,50 +88,16 @@
               <button class="char-list-delete" @click="deleteCharacter(c.id)" title="Delete">&#10005;</button>
             </div>
           </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div class="view" :class="{ active: view === 'dashboard' }">
-      <div class="dashboard">
-        <div class="xp-total-card">
-          <div class="xp-total-label" x-text="T('total_xp')"></div>
-          <div class="xp-total-number" x-text="totalXP"></div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card maneuver">
-            <div class="stat-card-label" x-text="T('cat_maneuver')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('maneuver')"></div>
-          </div>
-          <div class="stat-card save">
-            <div class="stat-card-label" x-text="T('cat_save')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('save')"></div>
-          </div>
-          <div class="stat-card crit-done">
-            <div class="stat-card-label" x-text="T('cat_crit_done')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('crit-done')"></div>
-          </div>
-          <div class="stat-card crit-recv">
-            <div class="stat-card-label" x-text="T('cat_crit_recv')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('crit-recv')"></div>
-          </div>
-          <div class="stat-card kill">
-            <div class="stat-card-label" x-text="T('cat_kill')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('kill')"></div>
-          </div>
-          <div class="stat-card spell">
-            <div class="stat-card-label" x-text="T('cat_spell')"></div>
-            <div class="stat-card-value" x-text="xpByCategory('spell')"></div>
-          </div>
-        </div>
-        <button class="submit-btn" @click="view = 'log'" x-text="T('btn_log_xp')"></button>
+        </div></div>
       </div>
     </div>
 
     <!-- LOG XP -->
     <div class="view" :class="{ active: view === 'log' }">
       <div class="log-view">
+        <div x-show="!char.id" class="journal-empty" x-text="T('no_char_yet')"></div>
+        <template x-if="char.id">
+        <div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
         <div class="section-title" x-text="T('choose_action')"></div>
         <div class="action-grid">
           <button class="action-btn" @click="openModal('maneuver')">
@@ -158,34 +125,30 @@
             <span class="btn-label" x-text="T('cat_spell')"></span>
           </button>
         </div>
-      </div>
-    </div>
-
-    <!-- JOURNAL -->
-    <div class="view" :class="{ active: view === 'journal' }">
-      <div class="journal-view">
-        <div class="filter-row">
-          <button class="filter-chip" :class="{ active: filter === 'all' }"       @click="filter = 'all'"       x-text="T('filter_all')"></button>
-          <button class="filter-chip" :class="{ active: filter === 'maneuver' }"  @click="filter = 'maneuver'" >&#129336; <span x-text="T('cat_maneuver')"></span></button>
-          <button class="filter-chip" :class="{ active: filter === 'save' }"      @click="filter = 'save'"     >&#128737;&#65039; <span x-text="T('cat_save')"></span></button>
-          <button class="filter-chip" :class="{ active: filter === 'crit-done' }" @click="filter = 'crit-done'">&#127919; <span x-text="T('cat_crit_done')"></span></button>
-          <button class="filter-chip" :class="{ active: filter === 'crit-recv' }" @click="filter = 'crit-recv'">&#129656; <span x-text="T('cat_crit_recv')"></span></button>
-          <button class="filter-chip" :class="{ active: filter === 'kill' }"      @click="filter = 'kill'"     >&#128128; <span x-text="T('cat_kill')"></span></button>
-          <button class="filter-chip" :class="{ active: filter === 'spell' }"     @click="filter = 'spell'"    >&#10024; <span x-text="T('cat_spell')"></span></button>
-        </div>
-        <div x-show="filteredLog.length === 0" class="journal-empty" x-text="T('no_entries')"></div>
-        <template x-for="entry in filteredLog" :key="entry.id">
-          <div class="journal-entry" :class="entry.cat">
-            <div class="entry-top">
-              <span class="entry-cat" x-text="catLabel(entry.cat)"></span>
-              <span class="entry-xp"  x-text="entryXpStr(entry)"></span>
+        <div class="log-journal-scroll">
+          <div x-show="groupedLog.length === 0" class="journal-empty" x-text="T('no_entries')"></div>
+          <template x-for="group in groupedLog" :key="group.date">
+            <div>
+              <div class="log-date-header" x-text="formatDay(group.date)"></div>
+              <template x-for="entry in group.entries" :key="entry.id">
+                <div class="journal-entry" :class="entry.cat">
+                  <span class="entry-icon" x-text="catIcon(entry.cat)"></span>
+                  <div class="entry-body">
+                    <span class="entry-desc" x-text="renderDesc(entry.descData)"></span>
+                    <span class="entry-note" x-show="entry.note" x-text="entry.note"></span>
+                  </div>
+                  <span class="entry-time" x-text="entryTimeOnly(entry)"></span>
+                  <span class="entry-xp" x-text="entryXpStr(entry)"></span>
+                  <div class="entry-actions">
+                    <button class="entry-edit" @click="editEntry(entry)" title="Edit">&#9999;&#65039;</button>
+                    <button class="entry-delete" @click="deleteEntry(entry.id)" title="Delete">&#10005;</button>
+                  </div>
+                </div>
+              </template>
             </div>
-            <div class="entry-desc" x-text="renderDesc(entry.descData)"></div>
-            <div class="entry-note" x-show="entry.note" x-text="entry.note"></div>
-            <div class="entry-time" x-text="entryTime(entry)"></div>
-            <button class="entry-delete" @click="deleteEntry(entry.id)">&#10005;</button>
-          </div>
-        </template>
+          </template>
+        </div>
+        </div></template>
       </div>
     </div>
   </main>
@@ -246,8 +209,8 @@
         <div style="flex:1;min-width:0;">
           <div class="form-group">
             <label class="form-label" x-text="T('lbl_save_score')"></label>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
-              <template x-for="v in [40,60,80,100,120,140,160,180]" :key="v">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;">
+              <template x-for="v in Array.from({length:20},(_,i)=>(i+1)*10)" :key="v">
                 <button class="opt-btn" :class="{ selected: modal.saveScore === v }" @click="modal.saveScore = v" x-text="String(v)"></button>
               </template>
             </div>
