@@ -203,7 +203,7 @@ test('deleting a character removes it from the list', async ({ page }) => {
 test('toggling language switches UI to Italian', async ({ page }) => {
   await setup(page, { char: BASE_CHAR });
 
-  await page.locator('.lang-btn', { hasText: 'EN' }).click();
+  await page.locator('select.lang-btn').selectOption('it');
 
   await expect(page.getByRole('button', { name: 'Registra' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Manovra' })).toBeVisible();
