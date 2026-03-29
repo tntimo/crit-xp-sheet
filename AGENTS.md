@@ -201,7 +201,7 @@ This app targets WCAG 2.2 Level AA. Enforce the following at all times:
 
 ## Key Constraints
 
-- **No build step, no npm** — additional `.css` / `.js` files are fine, but there is no bundler. All assets must be plain files loadable directly by the browser.
+- **No build step, no npm** — additional `.css` / `.js` files are fine, but there is no bundler. All assets must be plain files loadable directly by the browser. **When adding a new file, also add it to the `cp` commands in `.github/workflows/deploy.yml`** — only explicitly listed files are published to GitHub Pages.
 - **No localStorage in Claude artifacts** — when prototyping changes as Claude artifacts, use in-memory state.
 - **Alpine.js v3** — use `x-data`, `x-model`, `x-text`, `x-show`, `x-for`, `:class`, `@click`. No jQuery or other libs.
 - **Mobile-first** — max-width 480px, touch targets ≥ 44px, sticky header + nav.
