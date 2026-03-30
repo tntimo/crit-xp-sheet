@@ -1,4 +1,4 @@
-# Critical Based · XP Sheet
+# RPG Experience Points Tracker
 
 A lightweight, mobile-friendly experience point tracker for tabletop RPGs — designed for systems where XP is earned through maneuvers, saving throws, criticals, kills, and spells (e.g. HARP).
 
