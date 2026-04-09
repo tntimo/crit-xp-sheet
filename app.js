@@ -21,19 +21,6 @@ async function getDB() {
   return _db;
 }
 
-// Migrate a raw characters array (from localStorage or the v1 kv store) into v2 tables.
-async function migrateCharArray(db, chars, activeId) {
-  for (const char of chars) {
-    const { log = [], startCp, ...rest } = char;
-    if (rest.startXp === undefined) rest.startXp = startCp ?? 0;
-    if (!rest.id) rest.id = Date.now();
-    await db.put('characters', { id: rest.id, name: rest.name || '', cls: rest.cls || '', level: rest.level || 1, startXp: rest.startXp });
-    for (const entry of log) {
-      await db.put('entries', { ...entry, charId: rest.id });
-    }
-  }
-  if (activeId) localStorage.setItem('cb_active_char', String(activeId));
-}
 
 async function dbGetEntriesForChar(charId) {
   return (await getDB()).getAllFromIndex('entries', 'by_char', charId);
@@ -141,7 +128,6 @@ window.app = function app() {
     lang: localStorage.getItem('cb_lang') || 'en',
     theme: localStorage.getItem('cb_theme') || 'auto',
     view: 'setup',
-    // characters: metadata-only array { id, name, cls, level, startXp } — no log
     characters: [],
     activeCharId: null,
     char: { id: null, name:'', cls:'', level:1, startXp:0, log:[] },
@@ -186,37 +172,16 @@ window.app = function app() {
 
     async init() {
       const db = await getDB();
-
-      // ── Migrate from localStorage (pre-IDB format) ──
-      const lsChars  = localStorage.getItem('cb_chars');
-      const lsActive = localStorage.getItem('cb_active_char');
-      const lsState  = localStorage.getItem('cb_state');
-      if (lsChars || lsState) {
-        let chars = null, activeId = null;
-        try { chars = JSON.parse(lsChars); activeId = parseInt(lsActive) || null; } catch(e) {}
-        if (!chars && lsState) {
-          try {
-            const old = JSON.parse(lsState);
-            if (old.startCp !== undefined && old.startXp === undefined) { old.startXp = old.startCp; delete old.startCp; }
-            old.id = old.id || Date.now();
-            chars = [old]; activeId = old.id;
-          } catch(e) {}
-        }
-        if (chars) await migrateCharArray(db, chars, activeId);
-        localStorage.removeItem('cb_chars');
-        localStorage.removeItem('cb_active_char');
-        localStorage.removeItem('cb_state');
-      }
-
-      // ── Load ──
-      const allChars = await db.getAll('characters');
       const activeId = parseInt(localStorage.getItem('cb_active_char')) || null;
-
+      const [allChars, preloadedEntries] = await Promise.all([
+        db.getAll('characters'),
+        activeId ? dbGetEntriesForChar(activeId) : Promise.resolve([]),
+      ]);
       if (allChars.length > 0) {
         this.characters = allChars;
         const active = allChars.find(c => c.id === activeId) || allChars[0];
         this.activeCharId = active.id;
-        const entries = await dbGetEntriesForChar(active.id);
+        const entries = active.id === activeId ? preloadedEntries : await dbGetEntriesForChar(active.id);
         this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...active, log: entries };
       }
       if (this.char.name) this.view = 'log';
@@ -253,14 +218,11 @@ window.app = function app() {
       localStorage.setItem('cb_lang', this.lang);
     },
 
-    // Returns the character metadata (no log) as a plain object.
     _charMeta() {
       const { id, name, cls, level, startXp } = this.char;
       return { id, name, cls, level, startXp };
     },
 
-    // Syncs this.char metadata into this.characters and persists to DB.
-    // Does NOT touch log entries — those are written individually.
     saveState() {
       if (!this.char.id) {
         this.char.id = Date.now();
@@ -292,17 +254,20 @@ window.app = function app() {
       this.activeCharId = null;
     },
 
+    _activateChar(c) {
+      this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...c, log: [] };
+      this.activeCharId = c.id;
+      localStorage.setItem('cb_active_char', String(c.id));
+      dbGetEntriesForChar(c.id).then(entries => { this.char.log = entries; });
+      if (this.char.name) this.view = 'log';
+    },
+
     switchCharacter(id) {
       if (id === this.activeCharId) return;
       this.saveState();
       const c = this.characters.find(ch => ch.id === id);
       if (!c) return;
-      // Update UI immediately with empty log, then fill entries once DB responds.
-      this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...c, log: [] };
-      this.activeCharId = id;
-      localStorage.setItem('cb_active_char', String(id));
-      dbGetEntriesForChar(id).then(entries => { this.char.log = entries; });
-      if (this.char.name) this.view = 'log';
+      this._activateChar(c);
     },
 
     deleteCharacter(id) {
@@ -313,12 +278,7 @@ window.app = function app() {
       dbDeleteCharAndEntries(id);
       if (id === this.activeCharId) {
         if (this.characters.length > 0) {
-          const next = this.characters[0];
-          this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...next, log: [] };
-          this.activeCharId = next.id;
-          localStorage.setItem('cb_active_char', String(next.id));
-          dbGetEntriesForChar(next.id).then(entries => { this.char.log = entries; });
-          if (this.char.name) this.view = 'log';
+          this._activateChar(this.characters[0]);
         } else {
           this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[] };
           this.activeCharId = null;
