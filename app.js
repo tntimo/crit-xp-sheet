@@ -1,3 +1,54 @@
+import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/build/index.js';
+
+// ═══════════════════════════════════════════
+// INDEXEDDB
+// Schema v1:
+//   characters  — keyPath 'id'               { id, name, cls, level, startXp }
+//   entries     — keyPath 'id', index by_char { id, charId, cat, xp, descData, note, ts }
+// Preferences (activeCharId, lang, theme, consent) stay in localStorage.
+// ═══════════════════════════════════════════
+let _db = null;
+async function getDB() {
+  if (!_db) {
+    _db = await openDB('cb_db', 1, {
+      upgrade(db) {
+        db.createObjectStore('characters', { keyPath: 'id' });
+        const entryStore = db.createObjectStore('entries', { keyPath: 'id' });
+        entryStore.createIndex('by_char', 'charId');
+      },
+    });
+  }
+  return _db;
+}
+
+// Migrate a raw characters array (from localStorage or the v1 kv store) into v2 tables.
+async function migrateCharArray(db, chars, activeId) {
+  for (const char of chars) {
+    const { log = [], startCp, ...rest } = char;
+    if (rest.startXp === undefined) rest.startXp = startCp ?? 0;
+    if (!rest.id) rest.id = Date.now();
+    await db.put('characters', { id: rest.id, name: rest.name || '', cls: rest.cls || '', level: rest.level || 1, startXp: rest.startXp });
+    for (const entry of log) {
+      await db.put('entries', { ...entry, charId: rest.id });
+    }
+  }
+  if (activeId) localStorage.setItem('cb_active_char', String(activeId));
+}
+
+async function dbGetEntriesForChar(charId) {
+  return (await getDB()).getAllFromIndex('entries', 'by_char', charId);
+}
+
+async function dbDeleteCharAndEntries(charId) {
+  const db = await getDB();
+  const tx = db.transaction(['characters', 'entries'], 'readwrite');
+  tx.objectStore('characters').delete(charId);
+  const idx = tx.objectStore('entries').index('by_char');
+  let cursor = await idx.openCursor(IDBKeyRange.only(charId));
+  while (cursor) { cursor.delete(); cursor = await cursor.continue(); }
+  await tx.done;
+}
+
 // ═══════════════════════════════════════════
 // XP TABLES
 // ═══════════════════════════════════════════
@@ -85,11 +136,12 @@ const CAT_ICON_MAP = {
   spell:      '\u2728',
   levelup:    '\u2B50',
 };
-function app() {
+window.app = function app() {
   return {
     lang: localStorage.getItem('cb_lang') || 'en',
     theme: localStorage.getItem('cb_theme') || 'auto',
     view: 'setup',
+    // characters: metadata-only array { id, name, cls, level, startXp } — no log
     characters: [],
     activeCharId: null,
     char: { id: null, name:'', cls:'', level:1, startXp:0, log:[] },
@@ -132,37 +184,40 @@ function app() {
     ],
     killLevels: [0,1,2,3,4,5,6,7,8,9,'10+'],
 
-    init() {
-      let chars = null;
-      let activeId = null;
-      try {
-        const s = localStorage.getItem('cb_chars');
-        chars = s ? JSON.parse(s) : null;
-        activeId = parseInt(localStorage.getItem('cb_active_char')) || null;
-      } catch(e) {}
+    async init() {
+      const db = await getDB();
 
-      // Migrate from old single-character format
-      if (!chars) {
-        try {
-          const s = localStorage.getItem('cb_state');
-          const old = s ? JSON.parse(s) : null;
-          if (old) {
-            if (old.startCp !== undefined && old.startXp === undefined) {
-              old.startXp = old.startCp; delete old.startCp;
-            }
-            old.id = Date.now();
-            chars = [old];
-            activeId = old.id;
-            localStorage.removeItem('cb_state');
-          }
-        } catch(e) {}
+      // ── Migrate from localStorage (pre-IDB format) ──
+      const lsChars  = localStorage.getItem('cb_chars');
+      const lsActive = localStorage.getItem('cb_active_char');
+      const lsState  = localStorage.getItem('cb_state');
+      if (lsChars || lsState) {
+        let chars = null, activeId = null;
+        try { chars = JSON.parse(lsChars); activeId = parseInt(lsActive) || null; } catch(e) {}
+        if (!chars && lsState) {
+          try {
+            const old = JSON.parse(lsState);
+            if (old.startCp !== undefined && old.startXp === undefined) { old.startXp = old.startCp; delete old.startCp; }
+            old.id = old.id || Date.now();
+            chars = [old]; activeId = old.id;
+          } catch(e) {}
+        }
+        if (chars) await migrateCharArray(db, chars, activeId);
+        localStorage.removeItem('cb_chars');
+        localStorage.removeItem('cb_active_char');
+        localStorage.removeItem('cb_state');
       }
 
-      if (chars && chars.length > 0) {
-        this.characters = chars;
-        const active = chars.find(c => c.id === activeId) || chars[0];
+      // ── Load ──
+      const allChars = await db.getAll('characters');
+      const activeId = parseInt(localStorage.getItem('cb_active_char')) || null;
+
+      if (allChars.length > 0) {
+        this.characters = allChars;
+        const active = allChars.find(c => c.id === activeId) || allChars[0];
         this.activeCharId = active.id;
-        this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...active };
+        const entries = await dbGetEntriesForChar(active.id);
+        this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...active, log: entries };
       }
       if (this.char.name) this.view = 'log';
       this.consentGiven = localStorage.getItem('cb_consent') === '1';
@@ -198,19 +253,25 @@ function app() {
       localStorage.setItem('cb_lang', this.lang);
     },
 
+    // Returns the character metadata (no log) as a plain object.
+    _charMeta() {
+      const { id, name, cls, level, startXp } = this.char;
+      return { id, name, cls, level, startXp };
+    },
+
+    // Syncs this.char metadata into this.characters and persists to DB.
+    // Does NOT touch log entries — those are written individually.
     saveState() {
       if (!this.char.id) {
         this.char.id = Date.now();
         this.activeCharId = this.char.id;
-        this.characters.push({ ...this.char });
+        this.characters.push(this._charMeta());
       } else if (this.activeCharId) {
         const idx = this.characters.findIndex(c => c.id === this.activeCharId);
-        if (idx >= 0) this.characters.splice(idx, 1, { ...this.char });
+        if (idx >= 0) this.characters.splice(idx, 1, this._charMeta());
       }
-      try { localStorage.setItem('cb_chars', JSON.stringify(this.characters)); } catch(e) {}
-      if (this.activeCharId) {
-        try { localStorage.setItem('cb_active_char', String(this.activeCharId)); } catch(e) {}
-      }
+      getDB().then(db => db.put('characters', this._charMeta()));
+      if (this.activeCharId) localStorage.setItem('cb_active_char', String(this.activeCharId));
     },
 
     saveCharacter() {
@@ -219,7 +280,7 @@ function app() {
       if (!this.char.id) {
         this.char.id = Date.now();
         this.activeCharId = this.char.id;
-        this.characters.push({ ...this.char });
+        this.characters.push(this._charMeta());
       }
       this.saveState();
       if (this.char.name) this.view = 'log';
@@ -236,9 +297,11 @@ function app() {
       this.saveState();
       const c = this.characters.find(ch => ch.id === id);
       if (!c) return;
-      this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...c };
+      // Update UI immediately with empty log, then fill entries once DB responds.
+      this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...c, log: [] };
       this.activeCharId = id;
-      try { localStorage.setItem('cb_active_char', String(id)); } catch(e) {}
+      localStorage.setItem('cb_active_char', String(id));
+      dbGetEntriesForChar(id).then(entries => { this.char.log = entries; });
       if (this.char.name) this.view = 'log';
     },
 
@@ -247,13 +310,14 @@ function app() {
       const name = c ? (c.name || '\u2014') : '\u2014';
       if (!confirm(this.T('delete_char_confirm').replace('{name}', name))) return;
       this.characters = this.characters.filter(ch => ch.id !== id);
-      try { localStorage.setItem('cb_chars', JSON.stringify(this.characters)); } catch(e) {}
+      dbDeleteCharAndEntries(id);
       if (id === this.activeCharId) {
         if (this.characters.length > 0) {
           const next = this.characters[0];
-          this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...next };
+          this.char = { id: null, name:'', cls:'', level:1, startXp:0, ...next, log: [] };
           this.activeCharId = next.id;
-          try { localStorage.setItem('cb_active_char', String(next.id)); } catch(e) {}
+          localStorage.setItem('cb_active_char', String(next.id));
+          dbGetEntriesForChar(next.id).then(entries => { this.char.log = entries; });
           if (this.char.name) this.view = 'log';
         } else {
           this.char = { id: null, name:'', cls:'', level:1, startXp:0, log:[] };
@@ -374,12 +438,15 @@ function app() {
       if (this.modal.editId) {
         const idx = this.char.log.findIndex(e => e.id === this.modal.editId);
         if (idx >= 0) {
-          this.char.log.splice(idx, 1, { ...this.char.log[idx], xp, descData: this.buildDescData(), note: this.modal.note || '' });
+          const updated = { ...this.char.log[idx], xp, descData: this.buildDescData(), note: this.modal.note || '' };
+          this.char.log.splice(idx, 1, updated);
+          getDB().then(db => db.put('entries', { ...updated, charId: this.char.id }));
         }
       } else {
-        this.char.log.push({ id: Date.now(), cat: this.modal.type, xp, descData: this.buildDescData(), note: this.modal.note || '', ts: new Date().toISOString() });
+        const entry = { id: Date.now(), cat: this.modal.type, xp, descData: this.buildDescData(), note: this.modal.note || '', ts: new Date().toISOString() };
+        this.char.log.push(entry);
+        getDB().then(db => db.add('entries', { ...entry, charId: this.char.id }));
       }
-      this.saveState();
       this.closeModal();
     },
 
@@ -388,7 +455,7 @@ function app() {
       const desc = entry ? this.renderDesc(entry.descData) : '';
       if (!confirm(this.T('delete_entry_confirm').replace('{desc}', desc))) return;
       this.char.log = this.char.log.filter(e => e.id !== id);
-      this.saveState();
+      getDB().then(db => db.delete('entries', id));
     },
 
     get groupedLog() {
@@ -442,7 +509,6 @@ function app() {
       if (e.cat === 'levelup') return '';
       return String(parseInt(e.xp) || 0);
     },
-
 
     showToast(msg) {
       this.toastMsg  = msg;

@@ -11,17 +11,51 @@ Currently everything is in `index.html` (inline CSS, inline JS). Additional `.cs
 
 Alpine.js v3 is loaded from CDN (`defer`). The single `app()` factory function is bound to `<body x-data="app()" x-init="init()">`. All XP lookup tables and `STRINGS` are plain module-level constants outside the Alpine component.
 
-### localStorage keys
+### Storage
+
+Character data is stored in **IndexedDB** via [idb](https://github.com/jakearchibald/idb) v8 (loaded from CDN as an ES module). `app.js` is loaded with `<script type="module">` so the import works without a build step. The Alpine `app()` factory is exposed as `window.app` to remain accessible from the HTML `x-data` attribute.
+
+The DB is named `cb_db` (version 1) with two object stores:
+
+#### `characters` store — keyPath `id`
+
+One row per character. No log embedded.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | number | `Date.now()` assigned on first save |
+| `name` | string | |
+| `cls` | string | optional |
+| `level` | number | manually set by user |
+| `startXp` | number | XP from before the session |
+
+#### `entries` store — keyPath `id`, index `by_char` on `charId`
+
+One row per XP log entry.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | number | `Date.now()` |
+| `charId` | number | FK → `characters.id` |
+| `cat` | string | see Categories |
+| `xp` | number | |
+| `descData` | object | structured description (re-localised on render) |
+| `note` | string | optional free-text |
+| `ts` | string | ISO timestamp |
+
+Individual entries are inserted/updated/deleted directly — `saveState()` only writes character metadata, never touches the entries store.
+
+#### localStorage keys (preferences — not in IDB)
 
 | Key | Value | Notes |
 |---|---|---|
-| `cb_chars` | JSON array of character objects | Current multi-character format |
 | `cb_active_char` | character `id` (number as string) | Which character is active |
 | `cb_lang` | `'en'` or `'it'` | Language preference |
 | `cb_consent` | `'1'` | Whether the user has acknowledged the privacy notice |
 | `cb_theme` | `'auto'` \| `'light'` \| `'dark'` | Manual theme override; defaults to `'auto'` (follows OS) |
 
-**Legacy key:** `cb_state` (single-character JSON object) — migrated to `cb_chars` on first load, then deleted.
+**Legacy keys (auto-migrated on first load then deleted):**
+- `cb_chars` / `cb_active_char` / `cb_state` in localStorage → migrated to IDB `characters` + `entries` stores
 
 ### Storage backward compatibility
 
@@ -29,7 +63,7 @@ Alpine.js v3 is loaded from CDN (`defer`). The single `app()` factory function i
 ```js
 { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...saved }
 ```
-Migrations belong in `init()`, following the existing patterns (`startCp → startXp`, `cb_state → cb_chars`).
+Migrations belong in `init()`. The async `init()` migrates legacy localStorage keys (`cb_chars`, `cb_active_char`, `cb_state`) into IndexedDB on first load and removes them. Follow the existing patterns for any new field migrations.
 
 ---
 
