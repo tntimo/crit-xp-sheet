@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>if(location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17,6 +17,7 @@
 <body x-data="app()" x-init="init()">
 
 <div id="app" x-cloak>
+  <div class="sticky-chrome">
   <header>
     <div class="header-top">
       <h1>&#9876; Critical Based &middot; XP Sheet</h1>
@@ -33,7 +34,6 @@
       <span class="char-xp" x-show="char.name"><span class="char-xp-label" x-text="T('current_xp')"></span> <span x-text="totalXP"></span></span>
     </div>
   </header>
-
   <nav>
     <button @click="view = 'setup'" :class="{ active: view === 'setup' }">
       <span class="nav-icon">&#129497;</span><span x-text="T('nav_setup')"></span>
@@ -42,6 +42,7 @@
       <span class="nav-icon">&#9999;&#65039;</span><span x-text="T('nav_log')"></span>
     </button>
   </nav>
+  </div><!-- /.sticky-chrome -->
 
   <main>
     <!-- CHARACTER SETUP -->
@@ -265,7 +266,7 @@
         <div style="flex:1;min-width:0;">
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label" x-text="T('lbl_crit_grade')"></label>
-            <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
+            <p style="font-size:0.875rem;color:var(--text2);margin-bottom:8px" x-text="T('foe_level_note')"></p>
             <div style="display:flex;gap:5px;">
               <template x-for="g in ['A','B','C','D','E']" :key="g">
                 <button class="opt-btn" style="flex:1;" :class="{ selected: modal.gradeRecv === g }" @click="modal.gradeRecv = g" x-text="g"></button>
@@ -293,7 +294,7 @@
                 <button class="opt-btn" :class="{ selected: modal.killOpp === String(l) }" @click="modal.killOpp = String(l)" x-text="String(l)"></button>
               </template>
             </div>
-            <p style="font-size:0.82rem;color:var(--text2);">
+            <p style="font-size:0.875rem;color:var(--text2);">
               <span x-text="T('your_level')"></span>: <strong x-text="char.level"></strong>
             </p>
           </div>
