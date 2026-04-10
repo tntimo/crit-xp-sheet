@@ -8,7 +8,7 @@
   --border2:   #888888;
   --text:      #000000;
   --text2:     #444444;
-  --text3:     #888888;
+  --text3:     #666666;
   --accent:      #0044cc;
   --accent-bg:   #d0e4ff;
   --accent-text: #001040;
@@ -34,7 +34,7 @@
   --border2:   #666666;
   --text:      #ffffff;
   --text2:     #aaaaaa;
-  --text3:     #666666;
+  --text3:     #888888;
   --accent:      #5599ff;
   --accent-bg:   #003080;
   --accent-text: #ffffff;
@@ -56,7 +56,7 @@
   --border2:   #888888;
   --text:      #000000;
   --text2:     #444444;
-  --text3:     #888888;
+  --text3:     #666666;
   --accent:      #0044cc;
   --accent-bg:   #d0e4ff;
   --accent-text: #001040;
@@ -78,7 +78,7 @@
     --border2:   #666666;
     --text:      #ffffff;
     --text2:     #aaaaaa;
-    --text3:     #666666;
+    --text3:     #888888;
     --accent:      #5599ff;
     --accent-bg:   #003080;
     --accent-text: #ffffff;
@@ -95,21 +95,24 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
-body { font-family: var(--font); font-size: 18px; background: var(--bg); color: var(--text); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font); font-size: 112.5%; background: var(--bg); color: var(--text); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 #app { max-width: 480px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
 
+/* ── STICKY CHROME (header + nav wrapper) ── */
+.sticky-chrome { position: sticky; top: 0; z-index: 100; }
+
 /* ── HEADER ── */
-header { background: var(--bg); border-bottom: 2px solid var(--border); padding: 10px 14px 8px; position: sticky; top: 0; z-index: 100; }
+header { background: var(--bg); border-bottom: 2px solid var(--border); padding: 10px 14px 8px; }
 .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 header h1 { font-size: 1rem; font-weight: 800; }
 .lang-btn { background: transparent; border: 2px solid var(--border); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 700; padding: 5px 10px; cursor: pointer; transition: background 0.1s, color 0.1s; }
 .lang-btn:hover { background: var(--border); color: var(--bg); }
 .char-strip { display: flex; align-items: baseline; gap: 8px; }
 .char-name  { font-size: 1rem; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.char-xp    { font-size: 0.9rem; font-weight: 800; white-space: nowrap; margin-left: auto; display: flex; gap: 4px; align-items: baseline; }
-.char-xp-label { font-size: 0.75rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; }
+.char-xp-label { font-size: 0.8rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* ── NAV ── */
-nav { display: flex; background: var(--bg); border-bottom: 2px solid var(--border); position: sticky; top: 55px; z-index: 99; }
+nav { display: flex; background: var(--bg); border-bottom: 2px solid var(--border); }
 nav button { flex: 1; padding: 10px 6px; background: transparent; border: none; border-right: 1px solid var(--border); cursor: pointer; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--text2); display: flex; align-items: center; justify-content: center; gap: 5px; transition: background 0.1s, color 0.1s; white-space: nowrap; }
 nav button:last-child { border-right: none; }
 nav button .nav-icon { font-size: 1rem; flex-shrink: 0; }
@@ -161,7 +164,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-hei
 .opt-btn.selected { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); }
 .opt-btn:active { background: var(--bg3); }
 .opt-btn:disabled { opacity: 0.25; cursor: not-allowed; }
-.opt-sub { font-size: 0.78rem; font-weight: 500; opacity: 0.75; display: block; margin-top: 1px; }
+.opt-sub { font-size: 0.8rem; font-weight: 500; opacity: 0.75; display: block; margin-top: 1px; }
 .submit-btn { width: 100%; padding: 14px; background: var(--accent-bg); border: none; cursor: pointer; font: inherit; font-size: 0.9rem; font-weight: 800; color: var(--accent-text); transition: opacity 0.1s; letter-spacing: 0.02em; }
 .submit-btn:active { opacity: 0.8; }
 .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -175,15 +178,14 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-hei
 .entry-icon { font-size: 1.2rem; text-align: center; }
 .entry-body { display: flex; flex-direction: column; min-width: 0; }
 .entry-desc { font-size: 0.875rem; color: var(--text); line-height: 1.3; }
-.entry-note { font-size: 0.82rem; color: var(--text2); font-style: italic; }
+.entry-note { font-size: 0.875rem; color: var(--text2); font-style: italic; }
 
-.entry-time { font-size: 0.75rem; color: var(--text3); white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.entry-time { font-size: 0.8rem; color: var(--text3); white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 .entry-xp   { font-size: 0.875rem; font-weight: 800; color: var(--text); white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 .entry-actions { display: flex; align-items: center; gap: 2px; }
-.entry-edit { background: transparent; border: none; font-size: 0.85rem; cursor: pointer; padding: 4px 2px; line-height: 1; opacity: 0.3; transition: opacity 0.1s; }
-.entry-delete { background: transparent; border: none; font-size: 0.85rem; font-weight: 900; cursor: pointer; padding: 4px 2px; line-height: 1; color: var(--danger); opacity: 0.3; transition: opacity 0.1s; }
-.journal-entry:hover .entry-edit, .journal-entry:hover .entry-delete { opacity: 0.8; }
-.entry-edit:hover, .entry-delete:hover { opacity: 1 !important; }
+.entry-edit { background: transparent; border: none; font-size: 0.85rem; cursor: pointer; padding: 4px 2px; line-height: 1; opacity: 0.5; }
+.entry-delete { background: transparent; border: none; font-size: 0.85rem; font-weight: 900; cursor: pointer; padding: 4px 2px; line-height: 1; color: var(--danger); opacity: 0.5; }
+.entry-edit:hover, .entry-delete:hover { opacity: 1; }
 
 /* ── SETUP ── */
 .setup-view  { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
