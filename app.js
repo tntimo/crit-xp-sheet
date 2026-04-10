@@ -156,6 +156,7 @@ window.app = function app() {
       note:'',
       editId: null,
     },
+    actionsOpen: true,
     filter: 'all',
     toastShow: false,
     toastMsg: '',

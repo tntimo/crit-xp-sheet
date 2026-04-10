@@ -99,8 +99,11 @@
         <div x-show="!char.id" class="journal-empty" x-text="T('no_char_yet')"></div>
         <template x-if="char.id">
         <div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
-        <div class="section-title" x-text="T('choose_action')"></div>
-        <div class="action-grid">
+        <div class="section-title" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;" @click="actionsOpen=!actionsOpen">
+          <span x-text="T('choose_action')"></span>
+          <span style="font-size:0.75rem;transition:transform 0.2s;" :style="actionsOpen?'transform:rotate(0deg)':'transform:rotate(-90deg)'">&#9660;</span>
+        </div>
+        <div class="action-grid" x-show="actionsOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           <button class="action-btn" @click="openModal('maneuver')">
             <span class="btn-icon">&#129336;</span>
             <span class="btn-label" x-text="T('cat_maneuver')"></span>
@@ -126,7 +129,7 @@
             <span class="btn-label" x-text="T('cat_spell')"></span>
           </button>
         </div>
-        <div class="log-journal-scroll">
+        <div class="log-journal-scroll" @scroll="actionsOpen = $el.scrollTop === 0">
           <div x-show="groupedLog.length === 0" class="journal-empty" x-text="T('no_entries')"></div>
           <template x-for="group in groupedLog" :key="group.date">
             <div>
