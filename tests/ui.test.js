@@ -9,10 +9,18 @@ async function setup(page, { char, lang } = {}) {
 
     // Write character and entries to IndexedDB if provided
     if (char) {
-      // Import the DB functions from app.js
-      const { getDB } = await import('./app.js');
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open('cb_db', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          db.createObjectStore('characters', { keyPath: 'id' });
+          const entryStore = db.createObjectStore('entries', { keyPath: 'id' });
+          entryStore.createIndex('by_char', 'charId');
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
 
-      const db = await getDB();
       const { log = [], ...charMeta } = char;
 
       // Store character metadata and entries in a single transaction
