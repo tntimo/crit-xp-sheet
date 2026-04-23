@@ -21,19 +21,6 @@ async function getDB() {
   return _db;
 }
 
-// Migrate a raw characters array (from localStorage or the v1 kv store) into v2 tables.
-async function migrateCharArray(db, chars, activeId) {
-  for (const char of chars) {
-    const { log = [], startCp, ...rest } = char;
-    if (rest.startXp === undefined) rest.startXp = startCp ?? 0;
-    if (!rest.id) rest.id = Date.now();
-    await db.put('characters', { id: rest.id, name: rest.name || '', cls: rest.cls || '', level: rest.level || 1, startXp: rest.startXp });
-    for (const entry of log) {
-      await db.put('entries', { ...entry, charId: rest.id });
-    }
-  }
-  if (activeId) localStorage.setItem('cb_active_char', String(activeId));
-}
 
 async function dbGetEntriesForChar(charId) {
   return (await getDB()).getAllFromIndex('entries', 'by_char', charId);
@@ -187,27 +174,6 @@ window.app = function app() {
 
     async init() {
       const db = await getDB();
-
-      // ── Migrate from localStorage (pre-IDB format) ──
-      const lsChars  = localStorage.getItem('cb_chars');
-      const lsActive = localStorage.getItem('cb_active_char');
-      const lsState  = localStorage.getItem('cb_state');
-      if (lsChars || lsState) {
-        let chars = null, activeId = null;
-        try { chars = JSON.parse(lsChars); activeId = parseInt(lsActive) || null; } catch(e) {}
-        if (!chars && lsState) {
-          try {
-            const old = JSON.parse(lsState);
-            if (old.startCp !== undefined && old.startXp === undefined) { old.startXp = old.startCp; delete old.startCp; }
-            old.id = old.id || Date.now();
-            chars = [old]; activeId = old.id;
-          } catch(e) {}
-        }
-        if (chars) await migrateCharArray(db, chars, activeId);
-        localStorage.removeItem('cb_chars');
-        localStorage.removeItem('cb_active_char');
-        localStorage.removeItem('cb_state');
-      }
 
       // ── Load ──
       const allChars = await db.getAll('characters');

@@ -45,7 +45,7 @@ One row per XP log entry.
 
 Individual entries are inserted/updated/deleted directly — `saveState()` only writes character metadata, never touches the entries store.
 
-#### localStorage keys (preferences — not in IDB)
+#### localStorage keys (preferences only)
 
 | Key | Value | Notes |
 |---|---|---|
@@ -54,8 +54,7 @@ Individual entries are inserted/updated/deleted directly — `saveState()` only 
 | `cb_consent` | `'1'` | Whether the user has acknowledged the privacy notice |
 | `cb_theme` | `'auto'` \| `'light'` \| `'dark'` | Manual theme override; defaults to `'auto'` (follows OS) |
 
-**Legacy keys (auto-migrated on first load then deleted):**
-- `cb_chars` / `cb_active_char` / `cb_state` in localStorage → migrated to IDB `characters` + `entries` stores
+**Note:** All character and log data is stored exclusively in IndexedDB. The localStorage migration from pre-IDB versions is no longer supported.
 
 ### Storage backward compatibility
 
@@ -63,7 +62,6 @@ Individual entries are inserted/updated/deleted directly — `saveState()` only 
 ```js
 { id: null, name:'', cls:'', level:1, startXp:0, log:[], ...saved }
 ```
-Migrations belong in `init()`. The async `init()` migrates legacy localStorage keys (`cb_chars`, `cb_active_char`, `cb_state`) into IndexedDB on first load and removes them. Follow the existing patterns for any new field migrations.
 
 ---
 
