@@ -8,7 +8,7 @@ import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/build/index.js';
 // Preferences (activeCharId, lang, theme, consent) stay in localStorage.
 // ═══════════════════════════════════════════
 let _db = null;
-async function getDB() {
+export async function getDB() {
   if (!_db) {
     _db = await openDB('cb_db', 1, {
       upgrade(db) {
@@ -21,12 +21,11 @@ async function getDB() {
   return _db;
 }
 
-
-async function dbGetEntriesForChar(charId) {
+export async function dbGetEntriesForChar(charId) {
   return (await getDB()).getAllFromIndex('entries', 'by_char', charId);
 }
 
-async function dbDeleteCharAndEntries(charId) {
+export async function dbDeleteCharAndEntries(charId) {
   const db = await getDB();
   const tx = db.transaction(['characters', 'entries'], 'readwrite');
   tx.objectStore('characters').delete(charId);

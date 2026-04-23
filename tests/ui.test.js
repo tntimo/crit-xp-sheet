@@ -1,12 +1,29 @@
 import { test, expect } from '@playwright/test';
 
-// Seed localStorage before the page loads so Alpine sees the data on init().
+// Seed IndexedDB and localStorage before the page loads.
 async function setup(page, { char, lang } = {}) {
-  await page.addInitScript(({ char, lang }) => {
+  await page.addInitScript(async ({ char, lang }) => {
+    // Set preferences in localStorage
     localStorage.setItem('cb_consent', '1');
     if (lang) localStorage.setItem('cb_lang', lang);
+
+    // Write character and entries to IndexedDB if provided
     if (char) {
-      localStorage.setItem('cb_chars', JSON.stringify([char]));
+      // Import the DB functions from app.js
+      const { getDB } = await import('./app.js');
+
+      const db = await getDB();
+      const { log = [], ...charMeta } = char;
+
+      // Store character metadata and entries in a single transaction
+      const tx = db.transaction(['characters', 'entries'], 'readwrite');
+      tx.objectStore('characters').put(charMeta);
+
+      for (const entry of log) {
+        tx.objectStore('entries').put({ ...entry, charId: char.id });
+      }
+
+      await tx.done;
       localStorage.setItem('cb_active_char', String(char.id));
     }
   }, { char, lang });
